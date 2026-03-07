@@ -17,27 +17,23 @@ export const CONFIG = {
 
   // ── Claude / LLM ──
   llm: {
-    provider: 'anthropic',           // 'anthropic' | 'openai' | 'gemini'
-    endpoint: 'https://api.anthropic.com/v1/messages',
+    provider: 'anthropic',
+    // Points to Vercel serverless proxy — API key stays server-side
+    endpoint: '/api/concierge',
     model: 'claude-sonnet-4-20250514',
     maxTokens: 1000,
-    // API key — in production, use a serverless proxy instead
-    // For hackathon demo, this is acceptable
+    // Only needed for local dev without Vercel (npx serve)
     apiKey: '',
   },
 
   // ── Bright Data ──
   brightData: {
     enabled: true,
+    // Points to Vercel serverless proxy — token stays server-side
+    proxyEndpoint: '/api/brightdata',
+    // Only needed for local dev without Vercel
     apiToken: '',
     datasetId: '',
-    get triggerUrl() {
-      return `https://api.brightdata.com/datasets/v3/trigger?dataset_id=${this.datasetId}&custom_output_fields=markdown`;
-    },
-    get snapshotUrl() {
-      return 'https://api.brightdata.com/datasets/v3/snapshot';
-    },
-    // Timeout for polling results (ms)
     pollTimeout: 30000,
     pollInterval: 3000,
   },
