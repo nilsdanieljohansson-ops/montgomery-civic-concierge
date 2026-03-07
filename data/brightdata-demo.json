@@ -1,0 +1,34 @@
+[
+  {
+    "key": "city_news",
+    "label": "City News & Announcements",
+    "category": "announcements",
+    "url": "https://www.montgomeryal.gov/news",
+    "snippet": "The City of Montgomery continues its investment in community infrastructure with several new projects announced this quarter. Residents are encouraged to attend upcoming town halls for updates on neighborhood improvements and city service enhancements.",
+    "source": "Bright Data"
+  },
+  {
+    "key": "city_alerts",
+    "label": "City Alerts & Closures",
+    "category": "safety",
+    "url": "https://www.montgomeryal.gov/residents/emergency-management",
+    "snippet": "The Emergency Management Agency reminds residents to stay prepared during severe weather season. Sign up for CodeRED emergency alerts to receive real-time notifications about weather events, road closures, and emergencies in your area.",
+    "source": "Bright Data"
+  },
+  {
+    "key": "road_closures",
+    "label": "Road Closures & Traffic",
+    "category": "infrastructure",
+    "url": "https://www.montgomeryal.gov/residents/street-closures",
+    "snippet": "Several road improvement projects are underway across the city. Drivers should expect temporary lane closures and detours in downtown and midtown areas. Check the city website for the latest road closure map and alternate routes.",
+    "source": "Bright Data"
+  },
+  {
+    "key": "city_events",
+    "label": "Community Events",
+    "category": "events",
+    "url": "https://www.montgomeryal.gov/things-to-do/events",
+    "snippet": "Upcoming community events include neighborhood clean-up days, farmers markets at Union Station, and cultural programs at the Montgomery Museum of Fine Arts. Visit the city events calendar for full listings and registration information.",
+    "source": "Bright Data"
+  }
+]

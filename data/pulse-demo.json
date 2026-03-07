@@ -1,0 +1,22 @@
+{
+  "shelters": {
+    "count": 23,
+    "summary": "23 tornado shelters mapped across Montgomery, including locations at community centers, schools, and public buildings."
+  },
+  "sirens": {
+    "count": 47,
+    "summary": "47 weather sirens positioned across Montgomery. Sirens are tested monthly and activated during severe weather events."
+  },
+  "calls911": {
+    "count": 18,
+    "summary": "18+ recent 911 call records on file. Data updated monthly by the Emergency Communications Department. Categories include medical, fire, and police responses."
+  },
+  "requests311": {
+    "count": 25,
+    "summary": "25+ recent 311 service requests tracked. Common categories include sanitation pickup, code violations, pothole reports, and streetlight outages."
+  },
+  "paving": {
+    "count": 12,
+    "summary": "12 active paving projects tracked. Road maintenance is continuously updated by the Public Works Street Maintenance Department."
+  }
+}

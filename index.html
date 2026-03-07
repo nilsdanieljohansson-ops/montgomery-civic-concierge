@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Montgomery Civic Concierge</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════
+       HEADER
+       ═══════════════════════════════════════ -->
+  <header class="header">
+    <div class="header-logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 34 34" fill="none">
+          <circle cx="17" cy="17" r="15" stroke="rgba(255,255,255,.3)" stroke-width="1.2"/>
+          <circle cx="17" cy="17" r="10" stroke="rgba(255,255,255,.15)" stroke-width=".8"/>
+          <path d="M17 5.5V11M17 23v5.5M5.5 17H11M23 17h5.5" stroke="rgba(255,255,255,.18)" stroke-width=".8"/>
+          <circle cx="17" cy="17" r="2.5" fill="#fff" opacity=".9"/>
+          <path d="M17 7.5l1.2 5.8L17 11.5l-1.2 1.8z" fill="#fff" opacity=".85"/>
+          <circle cx="17" cy="17" r="5.5" stroke="rgba(255,255,255,.45)" stroke-width=".8" fill="none"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <span class="name">Montgomery</span>
+        <span class="sub">Civic Concierge</span>
+      </div>
+    </div>
+
+    <button class="header-badge" id="hdrBadgeBtn" onclick="toggleBadgePanel()">
+      <span class="bd bd-ok" id="hdrDot"></span>
+      <span id="hdrBadgeTxt">All Clear</span>
+    </button>
+  </header>
+
+  <!-- Badge expand panel -->
+  <div class="badge-panel" id="badgePanel">
+    <b>Safety &amp; Advisories</b><br>
+    <span id="badgePanelTxt">No active advisories detected.</span>
+    <div class="disclaimer">Not an official emergency system. In an emergency, call 911.</div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════
+       MAIN LAYOUT
+       ═══════════════════════════════════════ -->
+  <div class="main-wrap">
+
+    <!-- HERO -->
+    <section class="hero">
+      <h1>How can I help you today?</h1>
+      <p>Your AI-powered guide to City of Montgomery services, safety updates, and civic resources.</p>
+
+      <div class="input-wrap">
+        <input class="input-query" id="queryInput" placeholder="Describe what you need help with..." autocomplete="off">
+        <input class="input-zip" id="zipInput" placeholder="ZIP" maxlength="5">
+        <button class="send-btn" id="sendBtn" onclick="handleSubmit()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+          Ask
+        </button>
+      </div>
+
+      <div class="quick-examples">
+        <button class="quick-btn" onclick="setQuery('My trash wasn\'t picked up')">Missed trash pickup</button>
+        <button class="quick-btn" onclick="setQuery('I need a business license')">Business license</button>
+        <button class="quick-btn" onclick="setQuery('Pothole on my street')">Report a pothole</button>
+        <button class="quick-btn" onclick="setQuery('Where is the nearest tornado shelter?')">Tornado shelter</button>
+        <button class="quick-btn" onclick="setQuery('Streetlight is out near my house')">Broken streetlight</button>
+      </div>
+    </section>
+
+    <!-- DATA PILLS -->
+    <div class="data-pills" id="dataPills">
+      <div class="pill"><b id="dsCount">0</b>&nbsp;datasets connected</div>
+      <div class="pill"><b>12</b>&nbsp;city departments</div>
+      <div class="pill">
+        <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3.5" fill="var(--ok)"/></svg>
+        &nbsp;Live data active
+      </div>
+      <button class="pill pill-btn" onclick="toggleTester()">⚙ Data Tester</button>
+    </div>
+
+    <!-- LEFT COLUMN -->
+    <div>
+      <!-- Loading -->
+      <div class="loading" id="loader">
+        <div class="spinner"></div>
+        <div class="loading-text">Analyzing your request...</div>
+        <div class="loading-sub">Checking city services &amp; safety data</div>
+      </div>
+
+      <!-- Result card -->
+      <div class="result-area" id="resultArea">
+        <div class="card">
+          <div class="card-header">
+            <div class="cat-row">
+              <div class="cat-icon" id="rIcon">🏛️</div>
+              <div>
+                <div class="cat-label">Issue Detected</div>
+                <div class="cat-name" id="rCat">—</div>
+              </div>
+            </div>
+            <div class="ib ok" id="rBadge" onclick="toggleSafetyDetail()">
+              <span class="ib-dot"></span>
+              <span id="rBadgeTxt">All Clear</span>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <!-- Steps -->
+            <div class="section">
+              <div class="section-label">What to do now</div>
+              <ol class="steps" id="rSteps"></ol>
+            </div>
+
+            <!-- Contact -->
+            <div class="section">
+              <div class="section-label">Best contact path</div>
+              <div class="contact-block" id="rContact"></div>
+            </div>
+
+            <!-- Safety expand -->
+            <div class="sfx ok-x" id="sfx">
+              <b>Safety Status:</b> <span id="sfxTxt">No active alerts.</span>
+              <div class="disclaimer">This is an informational tool, not an official emergency system. In an emergency, call 911.</div>
+            </div>
+
+            <!-- Report -->
+            <div class="section">
+              <button class="report-btn" onclick="generateReport()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+                Generate My Report
+              </button>
+              <div class="report-output" id="rptOut">
+                <button class="copy-btn" id="copyBtn" onclick="copyReport()">Copy</button>
+                <div class="report-text" id="rptText"></div>
+              </div>
+            </div>
+
+            <!-- Sources -->
+            <div class="chips" id="rChips"></div>
+
+            <!-- Concierge note -->
+            <div class="concierge-note" id="rNote"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data tester -->
+      <div class="tester-panel" id="testerPanel">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <h3>ArcGIS Endpoint Tester</h3>
+            <p>Verify data connections from Montgomery Open Data Portal</p>
+          </div>
+          <button class="test-run-btn" onclick="runTests()">Run Tests</button>
+        </div>
+        <table class="test-table">
+          <thead>
+            <tr><th>Source</th><th>Type</th><th>Status</th><th>Sample Fields</th></tr>
+          </thead>
+          <tbody id="testerBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RIGHT: CITY PULSE SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-title">City Pulse — Live Updates</div>
+
+      <div class="pulse-card">
+        <div class="pulse-header">
+          <div class="pulse-icon weather">⛈️</div>
+          <div class="pulse-title">Weather &amp; Emergency</div>
+        </div>
+        <div class="pulse-body" id="p1">Loading...</div>
+        <div class="pulse-meta">
+          <span id="p1t">—</span>
+          <span class="pulse-source">EMA</span>
+        </div>
+      </div>
+
+      <div class="pulse-card">
+        <div class="pulse-header">
+          <div class="pulse-icon safety">🛡️</div>
+          <div class="pulse-title">Public Safety</div>
+        </div>
+        <div class="pulse-body" id="p2">Loading...</div>
+        <div class="pulse-meta">
+          <span id="p2t">—</span>
+          <span class="pulse-source">Montgomery PD</span>
+        </div>
+      </div>
+
+      <div class="pulse-card">
+        <div class="pulse-header">
+          <div class="pulse-icon infra">🚧</div>
+          <div class="pulse-title">Infrastructure</div>
+        </div>
+        <div class="pulse-body" id="p3">Loading...</div>
+        <div class="pulse-meta">
+          <span id="p3t">—</span>
+          <span class="pulse-source">Public Works</span>
+        </div>
+      </div>
+
+      <div class="pulse-card">
+        <div class="pulse-header">
+          <div class="pulse-icon service">📋</div>
+          <div class="pulse-title">311 Service Requests</div>
+        </div>
+        <div class="pulse-body" id="p4">Loading...</div>
+        <div class="pulse-meta">
+          <span id="p4t">—</span>
+          <span class="pulse-source">Open Data</span>
+        </div>
+      </div>
+
+      <!-- BRIGHT DATA WEB INTELLIGENCE -->
+      <div class="bd-section">
+        <div class="bd-section-header">
+          <div class="bd-branding">
+            <img src="https://brightdata.com/favicon.ico" width="14" height="14" alt="Bright Data">
+            <span>Web Intelligence</span>
+          </div>
+          <span id="bdStatus" class="bd-demo">Demo</span>
+        </div>
+        <div id="brightDataCards">
+          <div style="font-size:12px;color:var(--muted);padding:0.5rem 0;">Loading web data...</div>
+        </div>
+        <div class="bd-footer">
+          Powered by <a href="https://brightdata.com" target="_blank">Bright Data</a> · Public web data scraped ethically
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div>
+        Montgomery Civic Concierge &middot;
+        Powered by <a href="https://opendata.montgomeryal.gov/" target="_blank">City of Montgomery Open Data</a> &middot;
+        Built for <a href="https://academy.genai.works/hackathon" target="_blank">World Wide Vibes Hackathon 2026</a>
+      </div>
+      <div class="disclaimer">
+        This is an informational AI tool — not an official City of Montgomery service. Not an emergency system. In an emergency, call 911.
+      </div>
+    </footer>
+  </div>
+
+  <!-- JavaScript (ES modules) -->
+  <script type="module" src="js/main.js"></script>
+
+</body>
+</html>

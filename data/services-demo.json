@@ -1,0 +1,73 @@
+{
+  "trash_pickup": {
+    "category": "Sanitation & Waste",
+    "categoryKey": "sanitation",
+    "steps": [
+      "Check your collection schedule on the city's Sanitation Schedules map to confirm your pickup day.",
+      "Call Public Works at (334) 625-2180 to report the missed pickup — have your address ready.",
+      "If not resolved within 48 hours, submit a 311 service request online for formal tracking."
+    ],
+    "contactDept": "Public Works — Sanitation",
+    "contactPhone": "(334) 625-2180",
+    "contactExtra": "View schedules at citymgm.maps.arcgis.com",
+    "safetyLevel": "green",
+    "safetyNote": "No active alerts in your area.",
+    "conciergeNote": "Hope this helps — missed pickups are usually resolved within a day or two once reported.",
+    "sources": ["City of Montgomery Open Data", "Sanitation Department"],
+    "reportSubject": "Missed Trash Pickup Report",
+    "reportBody": "Dear Public Works — Sanitation Department,\n\nI am writing to report a missed trash pickup at my address. My scheduled collection day has passed and the trash has not been collected.\n\nPlease arrange for pickup at your earliest convenience.\n\nThank you for your assistance."
+  },
+  "pothole": {
+    "category": "Roads & Infrastructure",
+    "categoryKey": "publicWorks",
+    "steps": [
+      "Note the exact location (street name, nearest intersection, or address) and approximate size of the pothole.",
+      "Call Public Works at (334) 625-2180 or submit a 311 service request online with the location details.",
+      "If the pothole poses an immediate safety hazard (large, in a busy intersection), mention this when reporting for priority handling."
+    ],
+    "contactDept": "Public Works Department",
+    "contactPhone": "(334) 625-2180",
+    "contactExtra": "Track paving projects at opendata.montgomeryal.gov",
+    "safetyLevel": "green",
+    "safetyNote": "No active alerts in your area.",
+    "conciergeNote": "Thanks for helping keep Montgomery's roads safe. Pothole repairs are typically addressed within 5-10 business days.",
+    "sources": ["City of Montgomery Open Data", "Public Works Department", "Paving Project Data"],
+    "reportSubject": "Pothole Report — Road Maintenance Request",
+    "reportBody": "Dear Public Works Department,\n\nI would like to report a pothole that needs repair. The pothole is located on [street name] near [nearest intersection].\n\nThe condition may pose a safety risk to drivers and pedestrians. Please schedule repair at your earliest convenience.\n\nThank you for your attention to this matter."
+  },
+  "business_license": {
+    "category": "Business Licensing",
+    "categoryKey": "businessLicense",
+    "steps": [
+      "Visit the Finance Department — Revenue Division at City Hall or call (334) 625-2059 for application requirements.",
+      "Prepare required documents: business name registration, state tax ID, federal EIN, and proof of location.",
+      "Submit your application in person or check the city website for online options. Processing typically takes 3-5 business days."
+    ],
+    "contactDept": "Finance — Revenue Division",
+    "contactPhone": "(334) 625-2059",
+    "contactExtra": "View active business licenses at opendata.montgomeryal.gov",
+    "safetyLevel": "green",
+    "safetyNote": "No active alerts in your area.",
+    "conciergeNote": "Good luck with your business venture! The Revenue Division staff are helpful with first-time applications.",
+    "sources": ["City of Montgomery Open Data", "Finance Department", "Business License Data"],
+    "reportSubject": "Business License Application Inquiry",
+    "reportBody": "Dear Finance Department — Revenue Division,\n\nI am writing to inquire about obtaining a business license in the City of Montgomery. I would like to understand the application process, required documentation, and associated fees.\n\nPlease advise on next steps or direct me to the appropriate resources.\n\nThank you for your time."
+  },
+  "tornado_shelter": {
+    "category": "Emergency Management",
+    "categoryKey": "ema",
+    "steps": [
+      "Check the Montgomery EMA tornado shelter map for the nearest designated shelter to your location.",
+      "Sign up for CodeRED emergency alerts at montgomeryal.gov to receive severe weather notifications.",
+      "Keep an emergency kit ready and review your family's severe weather plan before storm season."
+    ],
+    "contactDept": "Emergency Management Agency",
+    "contactPhone": "(334) 625-2800",
+    "contactExtra": "View shelter locations at opendata.montgomeryal.gov",
+    "safetyLevel": "yellow",
+    "safetyNote": "Severe weather season is active. Stay weather-aware and know your nearest shelter.",
+    "sources": ["City of Montgomery Open Data", "Emergency Management Agency", "Tornado Shelter Data"],
+    "reportSubject": "Tornado Shelter Location Inquiry",
+    "reportBody": "Dear Emergency Management Agency,\n\nI am writing to request information about the nearest tornado shelter to my location. I would also like to know about shelter accessibility and hours of operation during severe weather events.\n\nThank you for helping keep our community safe."
+  }
+}

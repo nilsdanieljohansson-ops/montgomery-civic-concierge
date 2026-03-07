@@ -1,0 +1,32 @@
+{
+  "green": {
+    "level": "green",
+    "label": "All Clear",
+    "note": "No active advisories detected for your area.",
+    "reasons": [
+      "No severe weather alerts from EMA.",
+      "No active road closures reported near your location.",
+      "911 call volume is within normal range."
+    ]
+  },
+  "yellow": {
+    "level": "yellow",
+    "label": "Advisory Nearby",
+    "note": "Weather advisory active — stay alert and check EMA updates.",
+    "reasons": [
+      "Severe thunderstorm watch issued for Montgomery County.",
+      "One road closure reported on Dexter Avenue due to utility work.",
+      "Emergency Management recommends monitoring weather conditions."
+    ]
+  },
+  "red": {
+    "level": "red",
+    "label": "Active Alert",
+    "note": "Severe weather warning active. Seek shelter and avoid unnecessary travel.",
+    "reasons": [
+      "Tornado warning issued for Montgomery County by NWS.",
+      "Multiple road closures reported across downtown area.",
+      "Emergency Management advises sheltering in place."
+    ]
+  }
+}
