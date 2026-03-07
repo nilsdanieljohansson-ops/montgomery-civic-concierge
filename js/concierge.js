@@ -76,6 +76,9 @@ export async function askConcierge(query, zip, cityData) {
   const systemPrompt = buildSystemPrompt(cityData, zip);
   const { endpoint, model, maxTokens } = CONFIG.llm;
 
+  // Quick check: is the proxy endpoint available?
+  // On GitHub Pages, /api/concierge is a static .js file → returns 405 on POST
+  // On Vercel, it's a serverless function → returns 200
   try {
     const res = await fetch(endpoint, {
       method: 'POST',
@@ -89,6 +92,12 @@ export async function askConcierge(query, zip, cityData) {
         ],
       }),
     });
+
+    // 405 = static hosting (GitHub Pages), not a real API
+    if (res.status === 405 || res.status === 404) {
+      console.log('[Concierge] Proxy not available (static hosting) — using fallback');
+      return fallbackRoute(query);
+    }
 
     if (!res.ok) {
       console.warn('[Concierge] API returned', res.status, '— using fallback');
