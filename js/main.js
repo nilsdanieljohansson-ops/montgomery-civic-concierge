@@ -31,25 +31,15 @@ const cityData = {
 // ────────────────────────────
 async function loadCityData() {
   const find = (key) => SOURCES.find((s) => s.key === key)?.url;
+  let usedDemo = false;
 
-  if (CONFIG.USE_DEMO_DATA) {
-    // Load from demo JSON files
-    console.log('[Init] Demo mode — loading from data/ files');
-    try {
-      const res = await fetch(CONFIG.demoPaths.pulse);
-      if (res.ok) {
-        const demo = await res.json();
-        cityData.shelters    = Array(demo.shelters.count).fill({ attributes: {} });
-        cityData.sirens      = Array(demo.sirens.count).fill({ attributes: {} });
-        cityData.calls911    = Array(demo.calls911.count).fill({ attributes: {} });
-        cityData.requests311 = Array(demo.requests311.count).fill({ attributes: {} });
-        cityData.paving      = Array(demo.paving.count).fill({ attributes: {} });
-      }
-    } catch (e) {
-      console.warn('[Init] Demo file load failed:', e);
-    }
+  if (CONFIG.MODE === 'demo') {
+    // ── Pure demo mode ──
+    await loadDemoPulse();
+    usedDemo = true;
+
   } else {
-    // Live ArcGIS queries
+    // ── Live or auto: try ArcGIS first ──
     const [sh, si, c9, r3, pv] = await Promise.allSettled([
       arcQuery(find('tornado_shelters'), { resultRecordCount: '200' }),
       arcQuery(find('weather_sirens'),   { resultRecordCount: '200' }),
@@ -63,15 +53,25 @@ async function loadCityData() {
     cityData.calls911    = c9.status === 'fulfilled' ? c9.value : [];
     cityData.requests311 = r3.status === 'fulfilled' ? r3.value : [];
     cityData.paving      = pv.status === 'fulfilled' ? pv.value : [];
+
+    // Auto-fallback: if all results are empty, load demo data
+    const totalRecords = cityData.shelters.length + cityData.sirens.length +
+      cityData.calls911.length + cityData.requests311.length + cityData.paving.length;
+
+    if (totalRecords === 0 && CONFIG.MODE === 'auto') {
+      console.warn('[Init] All ArcGIS queries returned empty — falling back to demo data');
+      await loadDemoPulse();
+      usedDemo = true;
+    }
   }
 
   // Update dataset count
   $('dsCount').textContent = SOURCES.length;
 
-  // Update sidebar pulse cards (ArcGIS data)
+  // Update sidebar pulse cards
   updatePulseCards(cityData);
 
-  // Load Bright Data web content
+  // ── Bright Data ──
   try {
     brightDataContent = await loadBrightData();
     updateBrightDataCards(brightDataContent, getLastCrawlTime(), isConfigured());
@@ -81,12 +81,31 @@ async function loadCityData() {
   }
 
   console.log('[Init] City data loaded:', {
+    mode: usedDemo ? 'demo' : 'live',
     shelters: cityData.shelters.length,
     sirens: cityData.sirens.length,
     calls911: cityData.calls911.length,
     requests311: cityData.requests311.length,
     paving: cityData.paving.length,
   });
+}
+
+/** Load pulse data from demo JSON files */
+async function loadDemoPulse() {
+  try {
+    const res = await fetch(CONFIG.demoPaths.pulse);
+    if (res.ok) {
+      const demo = await res.json();
+      cityData.shelters    = Array(demo.shelters.count).fill({ attributes: {} });
+      cityData.sirens      = Array(demo.sirens.count).fill({ attributes: {} });
+      cityData.calls911    = Array(demo.calls911.count).fill({ attributes: {} });
+      cityData.requests311 = Array(demo.requests311.count).fill({ attributes: {} });
+      cityData.paving      = Array(demo.paving.count).fill({ attributes: {} });
+      console.log('[Init] Demo pulse data loaded');
+    }
+  } catch (e) {
+    console.warn('[Init] Demo file load failed:', e);
+  }
 }
 
 // ────────────────────────────

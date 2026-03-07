@@ -52,17 +52,16 @@ let lastCrawlTime = null;
  * Returns a snapshot_id for result retrieval
  */
 export async function triggerCrawl() {
-  const { apiToken, triggerUrl } = CONFIG.brightData;
   const payload = CRAWL_TARGETS.map((t) => ({ url: t.url }));
 
   try {
-    const res = await fetch(triggerUrl, {
+    const res = await fetch(CONFIG.brightData.proxyEndpoint, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'trigger',
+        urls: payload,
+      }),
     });
 
     if (!res.ok) {
@@ -83,14 +82,15 @@ export async function triggerCrawl() {
  * Fetch crawl results by snapshot ID
  */
 export async function fetchCrawlResults(snapshotId) {
-  const { apiToken, snapshotUrl } = CONFIG.brightData;
   try {
-    const res = await fetch(
-      `${snapshotUrl}/${snapshotId}?format=json`,
-      {
-        headers: { 'Authorization': `Bearer ${apiToken}` },
-      }
-    );
+    const res = await fetch(CONFIG.brightData.proxyEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'snapshot',
+        snapshotId,
+      }),
+    });
 
     if (res.status === 202) {
       // Still processing
@@ -192,7 +192,7 @@ export function getDemoData() {
  */
 export async function loadBrightData() {
   // If demo mode or no API token, use demo data
-  if (CONFIG.USE_DEMO_DATA || !CONFIG.brightData.apiToken) {
+  if (CONFIG.MODE === 'demo' || !CONFIG.brightData.apiToken) {
     console.log('[Bright Data] Using demo data');
     try {
       const res = await fetch(CONFIG.demoPaths.brightData);
@@ -259,5 +259,5 @@ export function getByCategory(category) {
  * Check if Bright Data is configured (for UI display)
  */
 export function isConfigured() {
-  return !CONFIG.USE_DEMO_DATA && !!CONFIG.brightData.apiToken;
+  return CONFIG.MODE !== 'demo' && !!CONFIG.brightData.apiToken;
 }

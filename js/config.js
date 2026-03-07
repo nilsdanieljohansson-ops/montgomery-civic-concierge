@@ -6,9 +6,14 @@
 export const CONFIG = {
 
   // ── Mode ──
-  // Set to true to use local demo data instead of live APIs
-  // Flip this if APIs are down during demo
-  USE_DEMO_DATA: false,
+  // 'auto'  = try live APIs first, fall back to demo if they fail
+  // 'live'  = only use live APIs (errors shown if they fail)
+  // 'demo'  = only use local demo data (no API calls at all)
+  MODE: 'auto',
+
+  // Helper getters
+  get USE_DEMO_DATA() { return this.MODE === 'demo'; },
+  get USE_LIVE_DATA() { return this.MODE === 'live'; },
 
   // ── Claude / LLM ──
   llm: {
