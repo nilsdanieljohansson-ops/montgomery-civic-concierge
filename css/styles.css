@@ -48,6 +48,40 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Utility */
+[hidden] {
+  display: none !important;
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.noscript-msg {
+  background: #fff8e1;
+  color: #8a6914;
+  border-bottom: 1px solid #f1e1a6;
+  padding: 12px 16px;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Focus states */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 3px solid rgba(11,60,93,.18);
+  outline-offset: 2px;
+}
+
 /* ═══ HEADER ═══ */
 .header {
   background: rgba(255,255,255,.92);
@@ -407,12 +441,6 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Hide cards until data exists */
-#reportCard,
-#conciergeCard {
-  display: none;
-}
-
 /* Issue card */
 .r-card {
   background: var(--white);
@@ -733,6 +761,8 @@ body {
 
 /* Safety badge card */
 .sb-card {
+  appearance: none;
+  -webkit-appearance: none;
   background: var(--navy);
   color: white;
   border-radius: var(--r);
@@ -743,6 +773,10 @@ body {
   cursor: pointer;
   transition: .15s ease;
   box-shadow: var(--shadow-md);
+  border: none;
+  width: 100%;
+  text-align: left;
+  font: inherit;
 }
 
 .sb-card:hover {
@@ -778,20 +812,16 @@ body {
 }
 
 .sb-link {
-  background: none;
-  border: none;
   color: rgba(255,255,255,.75);
   font-size: 12px;
   font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 4px;
   white-space: nowrap;
 }
 
-.sb-link:hover {
+.sb-card:hover .sb-link {
   color: white;
 }
 
