@@ -50,13 +50,13 @@ export function updatePulseCards(cityData) {
 export function renderResult(result) {
   const safeResult = result || {};
   console.log('[UI] Rendering result:', safeResult);
-  const key = (safeResult.categoryKey || '').toLowerCase();
+  const key = safeResult.categoryKey || '';
 
-  const svc = SERVICES[key] || SERVICES.council || {
-    icon: '🏛️',
-    cat: safeResult.category || 'City Services',
-    emergency: ''
-  };
+const svc = SERVICES[key] || SERVICES.council || {
+  icon: '🏛️',
+  cat: safeResult.category || 'City Services',
+  emergency: ''
+};
 
   // Issue header
   if ($('rIcon')) $('rIcon').textContent = svc.icon || '🏛️';
@@ -238,6 +238,7 @@ export function updateBrightDataCards(items, lastCrawlTime, configured) {
     status.textContent = configured ? 'Live' : 'Demo';
   }
 }
+
 
 
 
