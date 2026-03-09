@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Montgomery Civic Concierge</title>
+  <meta name="description" content="AI-powered civic assistant for Montgomery residents. Find the right city service, report issues, and stay informed with city data and public web intelligence.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,15 +16,24 @@
   <header class="header">
     <div class="header-inner">
       <div class="header-logo">
-        <div class="logo-mark"><svg viewBox="0 0 44 44" fill="none"><circle cx="22" cy="22" r="20" fill="#0B3C5D"/><text x="22" y="27" text-anchor="middle" fill="white" font-family="Inter" font-weight="700" font-size="16">MC</text></svg></div>
+        <div class="logo-mark">
+          <svg viewBox="0 0 44 44" fill="none" aria-hidden="true">
+            <circle cx="22" cy="22" r="20" fill="#0B3C5D"/>
+            <text x="22" y="27" text-anchor="middle" fill="white" font-family="Inter" font-weight="700" font-size="16">MC</text>
+          </svg>
+        </div>
         <div class="logo-text">
           <span class="logo-city">Montgomery</span>
           <span class="logo-product">CIVIC CONCIERGE</span>
         </div>
       </div>
+
       <div class="header-right">
+        <div class="hdr-stat">
+          <span class="hdr-dot"></span>
+          <span id="dsCount">0</span> datasets
+        </div>
         <button class="hdr-pill" onclick="toggleTester()">⚙ Data Tester</button>
-        <div class="hdr-stat"><span class="hdr-dot"></span><span id="dsCount">0</span> datasets</div>
       </div>
     </div>
   </header>
@@ -36,14 +46,54 @@
 
         <!-- Hero -->
         <section class="hero">
-          <h1>How can I help you today?</h1>
-          <p>Find city services, report issues, and stay informed — all in one place.</p>
+          <div class="hero-kicker">Built for the World Wide Vibes Hackathon</div>
+
+          <h1>Find the right city service — instantly.</h1>
+
+          <p>
+            Ask a question and Montgomery Civic Concierge will guide you to the correct department,
+            suggest next steps, and help you prepare a ready-to-send report using city data and public web intelligence.
+          </p>
+
+          <div class="hero-builtwith">
+            <span>Built with Montgomery Open Data</span>
+            <span>•</span>
+            <span>Bright Data</span>
+            <span>•</span>
+            <span>AI Concierge Routing</span>
+          </div>
+
           <div class="search-bar">
             <div class="search-accent"></div>
-            <input id="queryInput" class="search-q" placeholder="Example: There's a pothole on Main St near my house" autocomplete="off">
-            <input id="zipInput" class="search-z" placeholder="ZIP Code" maxlength="5">
-            <button class="search-btn" id="sendBtn" onclick="handleSubmit()">Get Help <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+            <input
+              id="queryInput"
+              class="search-q"
+              placeholder="Example: There’s a pothole on Main St near my house"
+              autocomplete="off"
+              aria-label="Ask a city services question"
+            >
+            <input
+              id="zipInput"
+              class="search-z"
+              placeholder="ZIP Code"
+              maxlength="5"
+              aria-label="ZIP code"
+            >
+            <button class="search-btn" id="sendBtn" onclick="handleSubmit()">
+              Get Help
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </button>
           </div>
+
+          <div class="hero-examples">
+            <span class="hero-examples-label">Try asking:</span>
+            <span>How do I report a pothole?</span>
+            <span>Where is the nearest tornado shelter?</span>
+            <span>How do I report a code violation?</span>
+          </div>
+
           <div class="qtags">
             <button onclick="setQuery('My trash wasn\'t picked up')">🗑️ Missed pickup</button>
             <button onclick="setQuery('I need a business license')">🏢 Business license</button>
@@ -65,7 +115,11 @@
         </section>
 
         <!-- Loading -->
-        <div class="loader" id="loader"><div class="spinner"></div><div class="loader-t">Analyzing your request...</div><div class="loader-s">Checking city services &amp; safety data</div></div>
+        <div class="loader" id="loader">
+          <div class="spinner"></div>
+          <div class="loader-t">Analyzing your request...</div>
+          <div class="loader-s">Checking city services, safety context, and public web updates</div>
+        </div>
 
         <!-- ═══ RESULT ═══ -->
         <div class="result-area" id="resultArea">
@@ -81,16 +135,35 @@
               <span class="r-tag" id="rTag">City Services</span>
             </div>
 
-            <div class="r-steps-header"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B3C5D" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Here's what you can do:</div>
+            <div class="r-steps-header">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B3C5D" stroke-width="2" aria-hidden="true">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+              </svg>
+              Here’s what you can do next
+            </div>
+
             <div class="r-steps" id="rSteps"></div>
             <div class="r-contact" id="rContact"></div>
           </div>
 
           <!-- Report panel -->
           <div class="rpt-card" id="reportCard" style="display:none">
-            <div class="rpt-top"><span class="rpt-title">Generate my report</span><button class="rpt-copy" id="copyBtn" onclick="copyReport()" title="Copy"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
+            <div class="rpt-top">
+              <span class="rpt-title">Ready-to-send report</span>
+              <button class="rpt-copy" id="copyBtn" onclick="copyReport()" title="Copy report">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <rect x="9" y="9" width="13" height="13" rx="2"/>
+                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                </svg>
+              </button>
+            </div>
             <div class="rpt-body" id="rptText"></div>
-            <button class="rpt-submit" onclick="copyReport()">Copy &amp; Submit <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+            <button class="rpt-submit" onclick="copyReport()">
+              Copy &amp; Submit
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </button>
           </div>
 
           <!-- Concierge note -->
@@ -107,12 +180,33 @@
         </div>
 
         <!-- Safety detail -->
-        <div class="sfx" id="sfx"><b>Safety Status:</b> <span id="sfxTxt">No active alerts.</span><div class="sfx-d">This is an informational tool, not an official emergency system. In an emergency, call 911.</div></div>
+        <div class="sfx" id="sfx">
+          <b>Safety Status:</b> <span id="sfxTxt">No active alerts.</span>
+          <div class="sfx-d">
+            This is an informational tool, not an official emergency system. In an emergency, call 911.
+          </div>
+        </div>
 
         <!-- Data tester -->
         <div class="tester" id="testerPanel">
-          <div class="tester-hd"><div><h3>ArcGIS Endpoint Tester</h3><p>Verify data connections from Montgomery Open Data Portal</p></div><button class="tester-btn" onclick="runTests()">Run Tests</button></div>
-          <table class="tester-tbl"><thead><tr><th>Source</th><th>Type</th><th>Status</th><th>Sample Fields</th></tr></thead><tbody id="testerBody"></tbody></table>
+          <div class="tester-hd">
+            <div>
+              <h3>ArcGIS Endpoint Tester</h3>
+              <p>Verify data connections from Montgomery Open Data Portal</p>
+            </div>
+            <button class="tester-btn" onclick="runTests()">Run Tests</button>
+          </div>
+          <table class="tester-tbl">
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Sample Fields</th>
+              </tr>
+            </thead>
+            <tbody id="testerBody"></tbody>
+          </table>
         </div>
       </div>
 
@@ -123,38 +217,141 @@
         <div class="sb-card" id="safetyCard" onclick="toggleSafetyDetail()">
           <div class="sb-inner">
             <span class="sb-icon" id="hdrDot">✦</span>
-            <div><div class="sb-label">Safety Status</div><div class="sb-value" id="hdrBadgeTxt">All Clear</div></div>
+            <div>
+              <div class="sb-label">Safety Status</div>
+              <div class="sb-value" id="hdrBadgeTxt">All Clear</div>
+            </div>
           </div>
-          <button class="sb-link">View details <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+          <button class="sb-link">
+            View details
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
         </div>
-        <div class="badge-panel" id="badgePanel"><span id="badgePanelTxt">No active advisories detected.</span><div class="bp-d">Not an official emergency system. In an emergency, call 911.</div></div>
+
+        <div class="badge-panel" id="badgePanel">
+          <span id="badgePanelTxt">No active advisories detected.</span>
+          <div class="bp-d">
+            Not an official emergency system. In an emergency, call 911.
+          </div>
+        </div>
 
         <!-- City Pulse -->
         <div class="side-box">
-          <div class="side-hd"><div class="side-title"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> City Pulse</div><span class="side-live">Live</span></div>
+          <div class="side-hd">
+            <div class="side-title">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+              City Pulse
+            </div>
+            <span class="side-live">Live</span>
+          </div>
+
+          <div class="side-sub">
+            Live city data and practical local updates for Montgomery residents.
+          </div>
+
           <div class="pulse-stack">
-            <div class="pulse-item"><div class="pbar pbar-warn"></div><div class="pcontent"><div class="pcat pcat-warn">Weather Alert</div><div class="ptitle" id="p1">Loading...</div><div class="pmeta"><span id="p1t">—</span><span>Source: EMA</span></div></div><div class="pdot pdot-warn"></div></div>
-            <div class="pulse-item"><div class="pbar pbar-red"></div><div class="pcontent"><div class="pcat pcat-red">Public Safety</div><div class="ptitle" id="p2">Loading...</div><div class="pmeta"><span id="p2t">—</span><span>Source: Montgomery PD</span></div></div><div class="pdot pdot-blue"></div></div>
-            <div class="pulse-item"><div class="pbar pbar-green"></div><div class="pcontent"><div class="pcat pcat-green">Infrastructure</div><div class="ptitle" id="p3">Loading...</div><div class="pmeta"><span id="p3t">—</span><span>Source: Public Works</span></div></div><div class="pdot pdot-green"></div></div>
-            <div class="pulse-item"><div class="pbar pbar-blue"></div><div class="pcontent"><div class="pcat pcat-blue">311 Requests</div><div class="ptitle" id="p4">Loading...</div><div class="pmeta"><span id="p4t">—</span><span>Source: Open Data</span></div></div><div class="pdot pdot-blue"></div></div>
+            <div class="pulse-item">
+              <div class="pbar pbar-warn"></div>
+              <div class="pcontent">
+                <div class="pcat pcat-warn">Weather Alert</div>
+                <div class="ptitle" id="p1">Loading...</div>
+                <div class="pmeta"><span id="p1t">—</span><span>Source: EMA</span></div>
+              </div>
+              <div class="pdot pdot-warn"></div>
+            </div>
+
+            <div class="pulse-item">
+              <div class="pbar pbar-red"></div>
+              <div class="pcontent">
+                <div class="pcat pcat-red">Public Safety</div>
+                <div class="ptitle" id="p2">Loading...</div>
+                <div class="pmeta"><span id="p2t">—</span><span>Source: Montgomery PD</span></div>
+              </div>
+              <div class="pdot pdot-blue"></div>
+            </div>
+
+            <div class="pulse-item">
+              <div class="pbar pbar-green"></div>
+              <div class="pcontent">
+                <div class="pcat pcat-green">Infrastructure</div>
+                <div class="ptitle" id="p3">Loading...</div>
+                <div class="pmeta"><span id="p3t">—</span><span>Source: Public Works</span></div>
+              </div>
+              <div class="pdot pdot-green"></div>
+            </div>
+
+            <div class="pulse-item">
+              <div class="pbar pbar-blue"></div>
+              <div class="pcontent">
+                <div class="pcat pcat-blue">311 Requests</div>
+                <div class="ptitle" id="p4">Loading...</div>
+                <div class="pmeta"><span id="p4t">—</span><span>Source: Open Data</span></div>
+              </div>
+              <div class="pdot pdot-blue"></div>
+            </div>
           </div>
         </div>
 
         <!-- Emergency -->
         <div class="side-box">
-          <div class="side-hd"><div class="side-title" style="color:#D64045"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#D64045" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg> Emergency Resources</div></div>
+          <div class="side-hd">
+            <div class="side-title" style="color:#D64045">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#D64045" stroke-width="2" aria-hidden="true">
+                <path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              Emergency Resources
+            </div>
+          </div>
+
           <div class="emg-list">
-            <a href="tel:911" class="emg-link">📞 911 / Police / Fire <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
-            <a href="#" class="emg-link" onclick="setQuery('Where is the nearest tornado shelter?');handleSubmit();return false">🏠 Find Shelter <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
-            <div class="emg-tags"><a href="https://opendata.montgomeryal.gov/" target="_blank" class="emg-tag">🌊 Flood Zones</a><a href="https://opendata.montgomeryal.gov/" target="_blank" class="emg-tag">🚒 Fire Stations</a></div>
+            <a href="tel:911" class="emg-link">
+              📞 911 / Police / Fire
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </a>
+
+            <a href="#" class="emg-link" onclick="setQuery('Where is the nearest tornado shelter?');handleSubmit();return false">
+              🏠 Find Shelter
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </a>
+
+            <div class="emg-tags">
+              <a href="https://opendata.montgomeryal.gov/" target="_blank" class="emg-tag">🌊 Flood Zones</a>
+              <a href="https://opendata.montgomeryal.gov/" target="_blank" class="emg-tag">🚒 Fire Stations</a>
+            </div>
           </div>
         </div>
 
         <!-- Bright Data -->
         <div class="side-box bd-box">
-          <div class="bd-hd"><div class="bd-brand"><img src="https://brightdata.com/favicon.ico" width="14" height="14" alt=""> Web Intelligence</div><span id="bdStatus" class="bd-demo">Demo</span></div>
-          <div id="brightDataCards" class="bd-cards"><div class="bd-ph">Loading web data...</div></div>
-          <div class="bd-ft">Powered by <a href="https://brightdata.com" target="_blank">Bright Data</a> · Public web data</div>
+          <div class="bd-hd">
+            <div class="bd-brand">
+              <img src="https://brightdata.com/favicon.ico" width="14" height="14" alt="">
+              Web Intelligence
+            </div>
+            <span id="bdStatus" class="bd-demo">Demo</span>
+          </div>
+
+          <div class="bd-intro">
+            Public web signals used to enrich city awareness and resident guidance.
+          </div>
+
+          <div id="brightDataCards" class="bd-cards">
+            <div class="bd-ph">Loading web data...</div>
+          </div>
+
+          <div class="bd-ft">
+            Powered by <a href="https://brightdata.com" target="_blank">Bright Data</a> · Public web data
+          </div>
         </div>
 
       </div>
@@ -162,6 +359,7 @@
   </main>
 
   <footer class="footer">
+    <span>Built for the World Wide Vibes Hackathon</span>
     <span>City of Montgomery · AI Civic Concierge (Beta)</span>
     <span>Not an official emergency system · <a href="https://opendata.montgomeryal.gov/" target="_blank">Data sources</a></span>
   </footer>
