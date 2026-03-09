@@ -278,8 +278,12 @@ async function handleSubmit() {
     console.log('[Submit] Local context:', localContext);
 
     const result = await askConcierge(query, zip, cityData, localContext);
-    currentResult = result || fallbackRoute(query);
-    renderResult(currentResult);
+console.log('[Submit] Concierge result:', result);
+
+currentResult = result || fallbackRoute(query);
+console.log('[Submit] Rendering result:', currentResult);
+
+renderResult(currentResult);
   } catch (err) {
     console.error('[Submit] Error:', err);
     currentResult = fallbackRoute(query);
@@ -393,3 +397,4 @@ window.toggleTester = toggleTester;
 window.runTests = runTests;
 
 init();
+
