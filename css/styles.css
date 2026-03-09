@@ -4,7 +4,7 @@
    product feel, and hackathon-ready polish
    ═══════════════════════════════════════════════════ */
 
-:root {
+:root 
   --navy: #0B3C5D;
   --navy-dark: #072a42;
   --teal: #1F7A8C;
@@ -388,6 +388,8 @@ body {
 .result-area,
 #resultArea {
   display: none;
+  opacity: 0;
+  visibility: hidden;
 }
 
 .result-area.on,
@@ -395,6 +397,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  opacity: 1 !important;
+  visibility: visible !important;
   animation: slideUp .3s ease-out;
 }
 
@@ -1249,5 +1253,6 @@ body {
     text-align: center;
   }
 }
+
 
 
