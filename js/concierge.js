@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════
 // CONCIERGE — Prompt orchestration & routing
 // Provider-agnostic: works with Claude, GPT, Gemini
-// Improved for robustness, cleaner prompting, safer JSON parsing
+// Updated with localContext support and improved fallback behavior
 // ════════════════════════════════════════════
 
 import { SERVICES } from './sources.js';
@@ -40,8 +40,20 @@ function buildCitySummary(cityData = {}, zip = '') {
   const requests311 = Array.isArray(cityData.requests311) ? cityData.requests311 : [];
   const paving = Array.isArray(cityData.paving) ? cityData.paving : [];
 
-  const shelterPreview = shelters.slice(0, 2).map(item => item?.attributes || item).filter(Boolean);
-  const pavingPreview = paving.slice(0, 2).map(item => item?.attributes || item).filter(Boolean);
+  const shelterPreview = shelters
+    .slice(0, 2)
+    .map((item) => item?.attributes || item)
+    .filter(Boolean);
+
+  const pavingPreview = paving
+    .slice(0, 2)
+    .map((item) => item?.attributes || item)
+    .filter(Boolean);
+
+  const requestPreview = requests311
+    .slice(0, 2)
+    .map((item) => item?.attributes || item)
+    .filter(Boolean);
 
   return {
     zip: zip || null,
@@ -54,7 +66,8 @@ function buildCitySummary(cityData = {}, zip = '') {
     },
     examples: {
       shelterSample: shelterPreview,
-      pavingSample: pavingPreview
+      pavingSample: pavingPreview,
+      request311Sample: requestPreview
     }
   };
 }
@@ -80,6 +93,13 @@ function inferSafetyBaseline(query, cityData = {}) {
   const sirens = Array.isArray(cityData.sirens) ? cityData.sirens.length : 0;
   const paving = Array.isArray(cityData.paving) ? cityData.paving.length : 0;
 
+  if (/fire in my building|building on fire|house on fire|medical emergency|not breathing|active crime|shooting|gun/i.test(q)) {
+    return {
+      level: 'red',
+      note: 'Possible active emergency detected. If there is immediate danger, call 911 now.'
+    };
+  }
+
   if (/tornado|storm|weather|shelter|flood|emergency|siren/.test(q)) {
     if (shelters > 0 || sirens > 0) {
       return {
@@ -93,7 +113,7 @@ function inferSafetyBaseline(query, cityData = {}) {
     };
   }
 
-  if (/road|pothole|street|traffic|closure|construction|detour|sidewalk/.test(q)) {
+  if (/road|pothole|street|traffic|closure|construction|detour|sidewalk|streetlight|light out/.test(q)) {
     if (paving > 0) {
       return {
         level: 'yellow',
@@ -102,7 +122,7 @@ function inferSafetyBaseline(query, cityData = {}) {
     }
   }
 
-  if (/fire|smoke|crime|break-in|theft|stolen|unsafe|police/.test(q)) {
+  if (/crime|police|theft|break-in|unsafe|stolen|vandal/.test(q)) {
     return {
       level: 'yellow',
       note: 'Safety-related concern detected. If this is urgent or active, contact emergency services immediately.'
@@ -118,7 +138,7 @@ function inferSafetyBaseline(query, cityData = {}) {
 /**
  * Build system prompt
  */
-function buildSystemPrompt(query, cityData, zip) {
+function buildSystemPrompt(query, cityData, zip, localContext = '') {
   const time = getTimeContext();
   const citySummary = buildCitySummary(cityData, zip);
   const deptGuide = buildDepartmentGuide();
@@ -128,17 +148,16 @@ function buildSystemPrompt(query, cityData, zip) {
 You are Montgomery Civic Concierge, an AI assistant for residents of Montgomery, Alabama.
 
 ROLE
-You help residents navigate city services, understand next steps, and prepare ready-to-send issue reports.
+You help residents navigate city services, understand next steps, and prepare ready-to-send issue reports or information inquiries.
 You are calm, practical, human, and concise.
-You should sound like a knowledgeable city staff member using modern tools.
+You should sound like a knowledgeable civic assistant using modern tools.
 
 IMPORTANT RULES
-- Prioritize the provided Montgomery city data and department guide over general knowledge.
-- Do not invent phone numbers, URLs, office hours, addresses, or alerts.
+- Prioritize the provided Montgomery city data, local context, and department guide over general knowledge.
+- Do not invent phone numbers, URLs, office hours, addresses, alerts, or service procedures.
 - If data is missing, be honest and keep the answer useful.
 - Keep all content practical and resident-focused.
 - If the request suggests immediate danger, active crime, fire, or medical emergency, set safetyLevel to "red" and clearly say to call 911.
-- Mention late evening or weekend context only when relevant.
 - Do not use markdown.
 - Return valid JSON only.
 - Do not wrap the JSON in backticks.
@@ -157,6 +176,45 @@ ${JSON.stringify(deptGuide, null, 2)}
 SAFETY BASELINE
 ${JSON.stringify(baseline, null, 2)}
 
+LOCAL CONTEXT
+${localContext || 'No additional local context was provided.'}
+
+LOCAL CONTEXT RULE
+- If local context is provided, use it to improve relevance, phrasing, and routing.
+- Do not claim exact locations, nearest matches, availability, or official details unless explicitly supported by the context.
+- Use local context to make the answer feel more specific to Montgomery.
+
+REPORT WRITING RULES
+- Make reportSubject and reportBody specific to the user's request.
+- Avoid repetitive generic phrases.
+- Write like a real resident preparing a useful city request.
+- Keep the tone professional, practical, and concise.
+- For issue reports, clearly describe the issue and request guidance or action.
+- For information requests, write a short inquiry, not a complaint or incident report.
+- Do not invent addresses, dates, names, phone numbers, or incident details.
+- Use placeholders like [address], [location], or [date] only when needed.
+
+MODE RULE
+- If the user is reporting a city problem, write the report as a service report.
+- If the user is asking for location or service information, write the report as an information inquiry.
+- Do not frame information requests as incidents.
+
+LOCATION REQUEST RULE
+If the user asks for location information such as:
+- "where is"
+- "nearest"
+- "find nearby"
+- "closest"
+
+Treat this as an informational request, not a service issue.
+Use safetyLevel = "green" unless danger is explicitly described.
+
+Examples of information requests:
+- "Where is the nearest fire station?"
+- "Where is the nearest tornado shelter?"
+- "Find a nearby pharmacy"
+- "Where are the closest parks?"
+
 TASK
 Classify the user's question into the best matching categoryKey from this set:
 sanitation, publicWorks, permits, businessLicense, police, fire, codeEnforcement, parks, traffic, ema, housing, council
@@ -174,7 +232,7 @@ Then return JSON in exactly this shape:
   "conciergeNote": "warm and human 1-2 sentence closing, relevant to time of day or weekend if applicable",
   "sources": ["source 1", "source 2"],
   "reportSubject": "short formal subject line",
-  "reportBody": "professional ready-to-send report text, 3-5 sentences"
+  "reportBody": "professional ready-to-send report text, 2-5 sentences"
 }
 
 QUALITY BAR
@@ -191,21 +249,21 @@ QUALITY BAR
 function extractModelText(data) {
   if (!data) return '';
 
-  // Our own proxy format
   if (typeof data.reply === 'string') return data.reply;
 
-  // Anthropic raw-ish
   if (Array.isArray(data.content) && data.content[0]?.text) {
     return data.content[0].text;
   }
 
-  // OpenAI-like
   if (data.choices?.[0]?.message?.content) {
     return data.choices[0].message.content;
   }
 
-  // Gemini-ish custom wrapper
   if (typeof data.text === 'string') return data.text;
+
+  if (data.parsed && typeof data.parsed === 'object') {
+    return JSON.stringify(data.parsed);
+  }
 
   return '';
 }
@@ -226,7 +284,6 @@ function safeParseConciergeJson(rawText, query) {
   try {
     return normalizeConciergeResponse(JSON.parse(cleaned), query);
   } catch (_) {
-    // Try to extract first JSON object
     const start = cleaned.indexOf('{');
     const end = cleaned.lastIndexOf('}');
     if (start !== -1 && end !== -1 && end > start) {
@@ -268,9 +325,10 @@ function normalizeConciergeResponse(obj, query) {
  * @param {string} query
  * @param {string} zip
  * @param {object} cityData
+ * @param {string} localContext
  * @returns {object}
  */
-export async function askConcierge(query, zip, cityData) {
+export async function askConcierge(query, zip, cityData, localContext = '') {
   if (!query || !query.trim()) {
     return fallbackRoute('general city help');
   }
@@ -280,7 +338,7 @@ export async function askConcierge(query, zip, cityData) {
     return fallbackRoute(query);
   }
 
-  const systemPrompt = buildSystemPrompt(query, cityData, zip);
+  const systemPrompt = buildSystemPrompt(query, cityData, zip, localContext);
   const { endpoint, model, maxTokens } = CONFIG.llm;
 
   try {
@@ -294,7 +352,7 @@ export async function askConcierge(query, zip, cityData) {
         messages: [
           {
             role: 'user',
-            content: `Resident question: ${query}${zip ? `\nZIP: ${zip}` : ''}`
+            content: `Resident question: ${query}${zip ? `\nZIP: ${zip}` : ''}${localContext ? `\n\nAdditional local civic context:\n${localContext}` : ''}`
           }
         ]
       })
@@ -313,7 +371,6 @@ export async function askConcierge(query, zip, cityData) {
     const data = await res.json();
     const rawText = extractModelText(data);
     return safeParseConciergeJson(rawText, query);
-
   } catch (err) {
     console.error('[Concierge] AI call failed, using fallback:', err);
     return fallbackRoute(query);
@@ -328,7 +385,7 @@ export function fallbackRoute(query) {
   let key = 'council';
 
   if (/trash|garbage|sanit|pickup|waste|dump|recycl|bulk/.test(q)) key = 'sanitation';
-  else if (/pothole|road|street|pav|sidewalk|curb/.test(q)) key = 'publicWorks';
+  else if (/pothole|road|street|pav|sidewalk|curb|drain|streetlight|light out/.test(q)) key = 'publicWorks';
   else if (/business|license|vendor|entrepreneur/.test(q)) key = 'businessLicense';
   else if (/permit|construct|build|inspect|renovation/.test(q)) key = 'permits';
   else if (/crime|police|theft|break-in|safe|stolen|vandal/.test(q)) key = 'police';
@@ -343,15 +400,12 @@ export function fallbackRoute(query) {
 
   const svc = SERVICES[key] || SERVICES.council;
   const safety = inferSafetyFromQuery(q);
+  const isInfoRequest = /where is|nearest|find nearby|closest|location|hours|address|phone number|information/i.test(q);
 
   return {
-    category: svc.cat,
+    category: isInfoRequest ? `${svc.cat} Information` : svc.cat,
     categoryKey: key,
-    steps: [
-      `Contact ${svc.dept} for assistance.`,
-      `Call ${svc.phone} during normal business hours if the issue is not urgent.`,
-      'If available, use the city portal or 311 request flow to create a trackable record.'
-    ],
+    steps: buildFallbackSteps(q, svc, isInfoRequest),
     contactDept: svc.dept,
     contactPhone: svc.phone,
     contactExtra: 'Visit the official City of Montgomery website or 311 resources for the latest service details.',
@@ -359,20 +413,34 @@ export function fallbackRoute(query) {
     safetyNote: safety.note,
     conciergeNote: getConciergeNote(),
     sources: ['City of Montgomery Open Data', 'City Services Directory'],
-    reportSubject: `Service Request: ${svc.cat}`,
-    reportBody: buildFallbackReportBody(query, svc),
+    reportSubject: buildFallbackSubject(q, svc, isInfoRequest),
+    reportBody: buildFallbackReportBody(query, svc, isInfoRequest)
   };
 }
 
 function inferSafetyFromQuery(q) {
-  if (/fire|smoke|active crime|break-in now|someone is following me|medical emergency|not breathing|gun|shooting/.test(q)) {
+  if (/fire in my building|building on fire|medical emergency|not breathing|gun|shooting|active crime/.test(q)) {
     return {
       level: 'red',
       note: 'This may require emergency response. If there is immediate danger or a medical emergency, call 911 now.'
     };
   }
 
+  if (/storm warning|tornado warning|flood warning|active fire|smoke in building/.test(q)) {
+    return {
+      level: 'red',
+      note: 'This may indicate an active emergency. Move to safety and call 911 if immediate help is needed.'
+    };
+  }
+
   if (/crime|police|unsafe|storm|tornado|flood|shelter|traffic|streetlight|light out|road clos|pothole/.test(q)) {
+    if (/where is|nearest|find nearby|closest|location|information/.test(q)) {
+      return {
+        level: 'green',
+        note: 'This is an information request. Check official city resources for the latest details.'
+      };
+    }
+
     return {
       level: 'yellow',
       note: 'This request may involve safety or travel conditions. Check local advisories and use caution if heading out.'
@@ -385,12 +453,47 @@ function inferSafetyFromQuery(q) {
   };
 }
 
-function buildFallbackReportBody(query, svc) {
+function buildFallbackSteps(q, svc, isInfoRequest) {
+  if (isInfoRequest) {
+    return [
+      `Contact ${svc.dept} for location or service information.`,
+      `Ask for the nearest or most relevant option for your area.`,
+      'Confirm any address, access details, or hours before traveling.'
+    ];
+  }
+
+  return [
+    `Contact ${svc.dept} for assistance.`,
+    `Call ${svc.phone} during normal business hours if the issue is not urgent.`,
+    'If available, use the city portal or 311 request flow to create a trackable record.'
+  ];
+}
+
+function buildFallbackSubject(q, svc, isInfoRequest) {
+  if (isInfoRequest) {
+    return `${svc.cat} Information Request`;
+  }
+  return `Service Request: ${svc.cat}`;
+}
+
+function buildFallbackReportBody(query, svc, isInfoRequest) {
+  if (isInfoRequest) {
+    return `Hello,
+
+I am requesting information related to ${svc.cat.toLowerCase()} in Montgomery regarding: ${query}.
+
+Please let me know the correct location, contact point, or next step for this request.
+
+Thank you.`;
+  }
+
   return `Hello,
 
-I would like to request assistance regarding the following issue: ${query}.
+I would like to report the following issue: ${query}.
 
-Please let me know the next steps or direct me to the appropriate resource within ${svc.dept}. Thank you for your time and assistance.`;
+Please let me know the next steps or direct me to the appropriate resource within ${svc.dept}.
+
+Thank you.`;
 }
 
 /**
