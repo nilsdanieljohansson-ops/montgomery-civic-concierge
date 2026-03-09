@@ -385,11 +385,13 @@ body {
 }
 
 /* ═══ RESULT AREA ═══ */
-.result-area {
+.result-area,
+#resultArea {
   display: none;
 }
 
-.result-area.on {
+.result-area.on,
+#resultArea.on {
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -1247,3 +1249,4 @@ body {
     text-align: center;
   }
 }
+
