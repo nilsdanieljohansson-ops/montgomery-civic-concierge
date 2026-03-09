@@ -9,18 +9,9 @@ function sendJson(res, status, body) {
 
 function buildSystemPrompt(extraText = '') {
   return `
-TASK
-Classify the resident request and return structured JSON.
+You are Montgomery Civic Concierge, an AI assistant for residents of Montgomery, Alabama.
 
-LOCATION REQUEST RULE
-If the user asks for location information such as:
-- "where is"
-- "nearest"
-- "find nearby"
-- "closest"
-
-Treat this as an information request rather than a service issue or emergency.
-Use a neutral category and do NOT escalate safetyLevel unless the user describes danger.
+Your job is to help residents identify the most likely city service category, understand next steps, and prepare a practical report they can submit.
 
 VOICE AND STYLE
 - Be concise, calm, and useful.
@@ -55,6 +46,21 @@ STRICT RELIABILITY RULES
 TASK
 Classify the resident request and return structured JSON.
 
+LOCATION REQUEST RULE
+If the user asks for location information such as:
+- "where is"
+- "nearest"
+- "find nearby"
+- "closest"
+
+Treat this as an information request rather than a service issue or emergency.
+Use safetyLevel = "green" unless the user explicitly describes danger.
+
+Examples of information requests:
+- "Where is the nearest fire station?"
+- "Find a nearby pharmacy"
+- "Where are the closest parks?"
+
 ALLOWED categoryKey values:
 sanitation
 publicWorks
@@ -75,11 +81,11 @@ CATEGORY MAPPING GUIDANCE
 - permits: building permits, inspections, construction approvals
 - businessLicense: business registration, business licensing, renewals
 - police: non-emergency police matters, theft reports, suspicious activity
-- fire: non-emergency fire department matters, fire prevention questions
+- fire: non-emergency fire department matters, fire prevention questions, fire station information
 - codeEnforcement: weeds, unsafe property, abandoned structures, nuisance property
 - parks: parks, playgrounds, fields, recreation spaces
 - traffic: signals, signs, speeding concerns, street markings
-- ema: severe weather prep, disaster response, emergency management
+- ema: severe weather prep, disaster response, emergency management, shelter information
 - housing: housing assistance, housing conditions, basic housing support
 - council: city council, general government questions, uncertain routing
 
@@ -205,11 +211,16 @@ function normalizePayload(payload) {
   return {
     category: cleanString(safe.category, 'General City Assistance', 80),
     categoryKey,
-    steps: cleanArray(safe.steps, [
-      'Review the issue details.',
-      'Contact the relevant city department.',
-      'Submit a trackable city request if available.'
-    ], 3, 120),
+    steps: cleanArray(
+      safe.steps,
+      [
+        'Review the issue details.',
+        'Contact the relevant city department.',
+        'Submit a trackable city request if available.'
+      ],
+      3,
+      120
+    ),
     contactDept: cleanString(safe.contactDept, 'City of Montgomery', 120),
     contactPhone: cleanString(safe.contactPhone, '311', 60),
     contactExtra: cleanString(
@@ -226,9 +237,12 @@ function normalizePayload(payload) {
       220
     ),
     conciergeNote: cleanString(safe.conciergeNote, 'Hope this helps.', 180),
-    sources: cleanArray(safe.sources, [
-      'City of Montgomery official information'
-    ], 3, 100),
+    sources: cleanArray(
+      safe.sources,
+      ['City of Montgomery official information'],
+      3,
+      100
+    ),
     reportSubject: cleanString(safe.reportSubject, 'City Service Request', 120),
     reportBody: cleanLines(
       safe.reportBody,
@@ -253,6 +267,7 @@ async function fetchAnthropic({ system, userPrompt, model, maxTokens, apiKey }) 
       body: JSON.stringify({
         model: model || MODEL,
         max_tokens: Number(maxTokens) || 500,
+        temperature: 0,
         system,
         messages: [
           {
@@ -314,10 +329,11 @@ export default async function handler(req, res) {
 
     let body = {};
     try {
-      body = typeof req.body === 'string'
-        ? JSON.parse(req.body || '{}')
-        : (req.body || {});
-    } catch (e) {
+      body =
+        typeof req.body === 'string'
+          ? JSON.parse(req.body || '{}')
+          : (req.body || {});
+    } catch {
       return sendJson(res, 400, {
         error: 'Invalid JSON request body'
       });
@@ -355,7 +371,7 @@ export default async function handler(req, res) {
 
     const rawText = extractClaudeText(result.data);
     const parsed = safeJsonObject(rawText);
-    const normalized = normalizePayload(parsed);
+    const normalized = normalizePayload(parsed || {});
 
     return sendJson(res, 200, {
       ok: true,
