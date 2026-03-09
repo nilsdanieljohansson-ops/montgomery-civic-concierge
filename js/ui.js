@@ -57,8 +57,8 @@ export function renderResult(result) {
 
   // Issue header
   if ($('rIcon')) $('rIcon').textContent = svc.icon || '🏛️';
-  if ($('rCat')) $('rCat').textContent = safeResult.category || 'General City Assistance';
-  if ($('rTag')) $('rTag').textContent = svc.cat || 'City Services';
+  $('rCat').textContent = result.category;
+$('rTag').textContent = svc.cat !== result.category ? svc.cat : 'City Service';
 
   // Safety badge
   const level = safeResult.safetyLevel || 'green';
@@ -234,3 +234,4 @@ export function updateBrightDataCards(items, lastCrawlTime, configured) {
     status.textContent = configured ? 'Live' : 'Demo';
   }
 }
+
