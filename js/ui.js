@@ -49,6 +49,7 @@ export function updatePulseCards(cityData) {
 // ────────────────────────────
 export function renderResult(result) {
   const safeResult = result || {};
+  console.log('[UI] Rendering result:', safeResult);
   const key = (safeResult.categoryKey || '').toLowerCase();
 
   const svc =
@@ -238,5 +239,6 @@ export function updateBrightDataCards(items, lastCrawlTime, configured) {
     status.textContent = configured ? 'Live' : 'Demo';
   }
 }
+
 
 
