@@ -70,9 +70,9 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; back
 .search-btn:disabled { opacity: .5; cursor: not-allowed; }
 
 /* Quick tags */
-.qtags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: .75rem; }
-.qtags button { background: var(--white); border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px; font-size: 12px; color: var(--text2); cursor: pointer; font-family: inherit; transition: .15s; }
-.qtags button:hover { border-color: var(--navy); color: var(--navy); background: rgba(11,60,93,.03); }
+.qtags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: .75rem; max-height: 80px; overflow-y: auto; padding-bottom: 2px; }
+.qtags button { background: var(--white); border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px; font-size: 12px; color: var(--text2); cursor: pointer; font-family: inherit; transition: .15s; white-space: nowrap; }
+.qtags button:hover { border-color: var(--navy); color: var(--navy); background: rgba(11,60,93,.04); box-shadow: 0 1px 3px rgba(11,60,93,.08); }
 
 /* ═══ LOADING ═══ */
 .loader { display: none; padding: 3rem; text-align: center; }
