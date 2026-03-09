@@ -121,17 +121,32 @@ export function fallbackRoute(query) {
   const q = query.toLowerCase();
   let key = 'council';
 
-  if (/trash|garbage|sanit|pickup|waste/.test(q))          key = 'sanitation';
-  else if (/pothole|road|street|pav|sidewalk/.test(q))     key = 'publicWorks';
-  else if (/business|license/.test(q))                      key = 'businessLicense';
-  else if (/permit|construct|build|inspect/.test(q))        key = 'permits';
-  else if (/crime|police|theft|break-in|safe/.test(q))      key = 'police';
-  else if (/fire|smoke/.test(q))                             key = 'fire';
-  else if (/code|violation|property|abandon|blight/.test(q)) key = 'codeEnforcement';
-  else if (/park|trail|recreation/.test(q))                  key = 'parks';
-  else if (/traffic|signal|light|streetlight/.test(q))       key = 'traffic';
-  else if (/tornado|weather|emergency|shelter|siren/.test(q)) key = 'ema';
-  else if (/zone|zoning|plan|develop/.test(q))               key = 'housing';
+  // Sanitation & Waste
+  if (/trash|garbage|sanit|pickup|waste|dump|recycl|bulk/.test(q))                key = 'sanitation';
+  // Roads & Infrastructure
+  else if (/pothole|road|street|pav|sidewalk|curb/.test(q))                       key = 'publicWorks';
+  // Business
+  else if (/business|license|vendor|entrepreneur/.test(q))                         key = 'businessLicense';
+  // Permits & Construction
+  else if (/permit|construct|build|inspect|renovation/.test(q))                    key = 'permits';
+  // Police & Safety
+  else if (/crime|police|theft|break-in|safe|stolen|vandal/.test(q))               key = 'police';
+  // Fire
+  else if (/fire\s?station|smoke|fire\s?rescue/.test(q))                           key = 'fire';
+  // Code Enforcement
+  else if (/code|violation|property|abandon|blight|overgrown|vacant|vehicle/.test(q)) key = 'codeEnforcement';
+  // Parks & Recreation
+  else if (/park|trail|recreation|playground|green/.test(q))                        key = 'parks';
+  // Traffic & Signals & Streetlights
+  else if (/traffic|signal|streetlight|light\s?out|crosswalk|road\s?clos/.test(q))  key = 'traffic';
+  // Emergency & Weather
+  else if (/tornado|weather|emergency|shelter|siren|flood|storm/.test(q))           key = 'ema';
+  // Planning & Zoning
+  else if (/zone|zoning|plan|develop|land\s?use/.test(q))                           key = 'housing';
+  // Food safety (→ codeEnforcement as closest dept)
+  else if (/food|restaurant|health\s?score|inspection|hygiene/.test(q))             key = 'codeEnforcement';
+  // Pharmacy / community (→ council as catch-all)
+  else if (/pharmacy|clinic|doctor|hospital|medical/.test(q))                       key = 'council';
 
   const svc = SERVICES[key];
 
