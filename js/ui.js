@@ -60,10 +60,10 @@ export function renderResult(result) {
       emergency: ''
     };
 
-  // Issue header
+    // Issue header
   if ($('rIcon')) $('rIcon').textContent = svc.icon || '🏛️';
-  $('rCat').textContent = result.category;
-$('rTag').textContent = svc.cat !== result.category ? svc.cat : 'City Service';
+  if ($('rCat')) $('rCat').textContent = safeResult.category || svc.cat || 'City Services';
+  if ($('rTag')) $('rTag').textContent = svc.cat !== (safeResult.category || '') ? svc.cat : 'City Service';
 
   // Safety badge
   const level = safeResult.safetyLevel || 'green';
@@ -239,6 +239,7 @@ export function updateBrightDataCards(items, lastCrawlTime, configured) {
     status.textContent = configured ? 'Live' : 'Demo';
   }
 }
+
 
 
 
