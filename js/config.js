@@ -16,15 +16,15 @@ export const CONFIG = {
   get USE_LIVE_DATA() { return this.MODE === 'live'; },
 
   // ── Claude / LLM ──
-  llm: {
-    provider: 'anthropic',
-    // Points to Vercel serverless proxy — API key stays server-side
-    endpoint: '/api/concierge',
-    model: 'claude-sonnet-4-20250514',
-    maxTokens: 1000,
-    // Only needed for local dev without Vercel (npx serve)
-    apiKey: '',
-  },
+llm: {
+  provider: 'anthropic',
+  // Points to Vercel serverless proxy — API key stays server-side
+  endpoint: '/api/claude',
+  model: 'claude-sonnet-4-20250514',
+  maxTokens: 1000,
+  // Only needed for local dev without Vercel (npx serve)
+  apiKey: '',
+},
 
   // ── Bright Data ──
   brightData: {
@@ -65,3 +65,4 @@ export const CONFIG = {
     brightData: './data/brightdata-demo.json',
   },
 };
+
