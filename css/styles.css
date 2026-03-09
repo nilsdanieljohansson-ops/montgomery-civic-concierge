@@ -4,7 +4,7 @@
    product feel, and hackathon-ready polish
    ═══════════════════════════════════════════════════ */
 
-:root 
+:root {
   --navy: #0B3C5D;
   --navy-dark: #072a42;
   --teal: #1F7A8C;
@@ -407,6 +407,12 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Hide cards until data exists */
+#reportCard,
+#conciergeCard {
+  display: none;
+}
+
 /* Issue card */
 .r-card {
   background: var(--white);
@@ -527,6 +533,7 @@ body {
   color: var(--text);
   background: var(--white);
   transition: .15s ease;
+  text-decoration: none;
 }
 
 .step-btn:hover {
@@ -542,6 +549,7 @@ body {
 
 .step-btn-primary:hover {
   background: var(--teal-hover);
+  color: white;
 }
 
 @media (max-width: 640px) {
@@ -1253,6 +1261,3 @@ body {
     text-align: center;
   }
 }
-
-
-
