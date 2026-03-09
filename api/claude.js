@@ -169,25 +169,63 @@ function normalizePayload(payload) {
 
   const safe = payload && typeof payload === 'object' ? payload : {};
 
+  const cleanString = (value, fallback, max = 300) => {
+    if (typeof value !== 'string') return fallback;
+    const cleaned = value.replace(/\s+/g, ' ').trim();
+    return cleaned ? cleaned.slice(0, max) : fallback;
+  };
+
+  const cleanLines = (value, fallback, max = 1200) => {
+    if (typeof value !== 'string') return fallback;
+    const cleaned = value.replace(/\r/g, '').trim();
+    return cleaned ? cleaned.slice(0, max) : fallback;
+  };
+
+  const cleanArray = (value, fallback, maxItems = 3, maxLen = 160) => {
+    if (!Array.isArray(value)) return fallback;
+    const items = value
+      .map((item) => String(item || '').replace(/\s+/g, ' ').trim())
+      .filter(Boolean)
+      .slice(0, maxItems)
+      .map((item) => item.slice(0, maxLen));
+    return items.length ? items : fallback;
+  };
+
+  const categoryKey = allowedKeys.has(safe.categoryKey) ? safe.categoryKey : 'council';
+
   return {
-    category: typeof safe.category === 'string' ? safe.category : 'General City Assistance',
-    categoryKey: allowedKeys.has(safe.categoryKey) ? safe.categoryKey : 'council',
-    steps: Array.isArray(safe.steps) ? safe.steps.slice(0, 3).map(String) : [
+    category: cleanString(safe.category, 'General City Assistance', 80),
+    categoryKey,
+    steps: cleanArray(safe.steps, [
       'Review the issue details.',
       'Contact the relevant city department.',
       'Submit a trackable city request if available.'
-    ],
-    contactDept: typeof safe.contactDept === 'string' ? safe.contactDept : 'City of Montgomery',
-    contactPhone: typeof safe.contactPhone === 'string' ? safe.contactPhone : '311',
-    contactExtra: typeof safe.contactExtra === 'string' ? safe.contactExtra : 'Check the official city website for updated service details.',
-    safetyLevel: ['green', 'yellow', 'red'].includes(safe.safetyLevel) ? safe.safetyLevel : 'green',
-    safetyNote: typeof safe.safetyNote === 'string' ? safe.safetyNote : 'No specific safety concern was identified from this request.',
-    conciergeNote: typeof safe.conciergeNote === 'string' ? safe.conciergeNote : 'Hope this helps.',
-    sources: Array.isArray(safe.sources) ? safe.sources.slice(0, 3).map(String) : ['Montgomery Open Data', 'City Services Directory'],
-    reportSubject: typeof safe.reportSubject === 'string' ? safe.reportSubject : 'City Service Request',
-    reportBody: typeof safe.reportBody === 'string'
-      ? safe.reportBody
-      : 'Hello,\n\nI would like assistance with a city service request. Please advise on the next steps.\n\nThank you.'
+    ], 3, 120),
+    contactDept: cleanString(safe.contactDept, 'City of Montgomery', 120),
+    contactPhone: cleanString(safe.contactPhone, '311', 60),
+    contactExtra: cleanString(
+      safe.contactExtra,
+      'Check the official city website for updated service details.',
+      220
+    ),
+    safetyLevel: ['green', 'yellow', 'red'].includes(safe.safetyLevel)
+      ? safe.safetyLevel
+      : 'green',
+    safetyNote: cleanString(
+      safe.safetyNote,
+      'No specific safety concern was identified from this request.',
+      220
+    ),
+    conciergeNote: cleanString(safe.conciergeNote, 'Hope this helps.', 180),
+    sources: cleanArray(safe.sources, [
+      'City of Montgomery official information'
+    ], 3, 100),
+    reportSubject: cleanString(safe.reportSubject, 'City Service Request', 120),
+    reportBody: cleanLines(
+      safe.reportBody,
+      'Hello,\n\nI would like assistance with a city service request. Please advise on the next steps.\n\nThank you.',
+      1500
+    )
   };
 }
 
