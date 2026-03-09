@@ -51,6 +51,12 @@ REPORT WRITING RULES
 - When the request is about reporting an issue, describe the issue clearly.
 - When the request is informational, write an inquiry instead of an incident report.
 
+MODE RULE
+- If the user is reporting a city problem, write the report as a service report.
+- If the user is asking for location or service information, write the report as an information inquiry.
+- Do not frame information requests as incidents.
+
+
 TASK
 Classify the resident request and return structured JSON.
 
