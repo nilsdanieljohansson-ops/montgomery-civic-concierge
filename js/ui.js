@@ -50,115 +50,134 @@ export function updatePulseCards(cityData) {
 export function renderResult(result) {
   const safeResult = result || {};
   console.log('[UI] Rendering result:', safeResult);
-  const key = safeResult.categoryKey || '';
 
-const svc = SERVICES[key] || SERVICES.council || {
-  icon: '🏛️',
-  cat: safeResult.category || 'City Services',
-  emergency: ''
-};
+  try {
+    const rawKey = safeResult.categoryKey || '';
 
-  // Issue header
-  if ($('rIcon')) $('rIcon').textContent = svc.icon || '🏛️';
-  if ($('rCat')) $('rCat').textContent = safeResult.category || svc.cat || 'City Services';
-  if ($('rTag')) $('rTag').textContent = svc.cat !== (safeResult.category || '') ? svc.cat : 'City Service';
+    const svc =
+      SERVICES[rawKey] ||
+      SERVICES[String(rawKey).toLowerCase()] ||
+      SERVICES.council || {
+        icon: '🏛️',
+        cat: safeResult.category || 'City Services',
+        emergency: ''
+      };
 
-  // Safety badge
-  const level = safeResult.safetyLevel || 'green';
-  const labels = {
-    green: 'All Clear',
-    yellow: 'Advisory Nearby',
-    red: 'Active Alert'
-  };
+    // Issue header
+    if ($('rIcon')) $('rIcon').textContent = svc.icon || '🏛️';
+    if ($('rCat')) $('rCat').textContent = safeResult.category || svc.cat || 'City Services';
+    if ($('rTag')) $('rTag').textContent = svc.cat !== (safeResult.category || '') ? svc.cat : 'City Service';
 
-  if ($('hdrBadgeTxt')) $('hdrBadgeTxt').textContent = labels[level] || 'All Clear';
-  if ($('sfxTxt')) $('sfxTxt').textContent = safeResult.safetyNote || 'No active alerts.';
-  if ($('badgePanelTxt')) $('badgePanelTxt').textContent = safeResult.safetyNote || 'No active advisories detected.';
+    console.log('[UI] Header rendered');
 
-  const hdrDot = $('hdrDot');
-  if (hdrDot) {
-    hdrDot.textContent = level === 'red' ? '🚨' : level === 'yellow' ? '⚠️' : '✦';
-  }
+    // Safety badge
+    const level = safeResult.safetyLevel || 'green';
+    const labels = {
+      green: 'All Clear',
+      yellow: 'Advisory Nearby',
+      red: 'Active Alert'
+    };
 
-  const card = $('safetyCard');
-  if (card) {
-    if (level === 'red') card.style.background = '#D64045';
-    else if (level === 'yellow') card.style.background = '#b8860b';
-    else card.style.background = '#0B3C5D';
-  }
+    if ($('hdrBadgeTxt')) $('hdrBadgeTxt').textContent = labels[level] || 'All Clear';
+    if ($('sfxTxt')) $('sfxTxt').textContent = safeResult.safetyNote || 'No active alerts.';
+    if ($('badgePanelTxt')) $('badgePanelTxt').textContent = safeResult.safetyNote || 'No active advisories detected.';
 
-  // Steps
-  const steps = Array.isArray(safeResult.steps) ? safeResult.steps.slice(0, 3) : [];
-  const stepColors = ['step-num-1', 'step-num-2', 'step-num-3'];
-  const stepLabels = ['Report Issue', 'Track Status', 'Contact Info'];
-      const callPhone = safeResult.contactPhone || '311';
-  const stepBtns = [
-    `<button class="step-btn step-btn-primary" onclick="generateReport()">Start Report</button>`,
-    `<button class="step-btn" type="button">Track Existing</button>`,
-    `<a class="step-btn" href="tel:${esc(callPhone)}">Call Now</a>`
-  ];
+    const hdrDot = $('hdrDot');
+    if (hdrDot) {
+      hdrDot.textContent = level === 'red' ? '🚨' : level === 'yellow' ? '⚠️' : '✦';
+    }
 
-  if ($('rSteps')) {
-    $('rSteps').innerHTML = steps.map((s, i) => `
-      <div class="step-card">
-        <div class="step-num ${stepColors[i] || 'step-num-3'}">${i + 1}</div>
-        <div class="step-title">${stepLabels[i] || `Step ${i + 1}`}</div>
-        <div class="step-desc">${esc(s)}</div>
-        ${stepBtns[i] || ''}
-      </div>
-    `).join('');
-  }
+    const card = $('safetyCard');
+    if (card) {
+      if (level === 'red') card.style.background = '#D64045';
+      else if (level === 'yellow') card.style.background = '#b8860b';
+      else card.style.background = '#0B3C5D';
+    }
 
-  // Contact
-  const dept = safeResult.contactDept || 'City of Montgomery';
-  const phone = safeResult.contactPhone || '311';
-  const extra = safeResult.contactExtra || '';
+    // Steps
+    const steps = Array.isArray(safeResult.steps) ? safeResult.steps.slice(0, 3) : [];
+    const stepColors = ['step-num-1', 'step-num-2', 'step-num-3'];
+    const stepLabels = ['Report Issue', 'Track Status', 'Contact Info'];
+    const callPhone = safeResult.contactPhone || '311';
 
-  if ($('rContact')) {
-    $('rContact').innerHTML = `
-      <div class="r-contact-main">
-        📞 <strong>${esc(dept)}</strong> · 
-        <a href="tel:${esc(phone)}">${esc(phone)}</a>
-        ${svc.emergency ? ` · Emergency: <a href="tel:${esc(svc.emergency)}">${esc(svc.emergency)}</a>` : ''}
-      </div>
-      <div class="r-contact-extra">${esc(extra)}</div>
-    `;
-  }
+    const stepBtns = [
+      `<button class="step-btn step-btn-primary" onclick="generateReport()">Start Report</button>`,
+      `<button class="step-btn" type="button">Track Existing</button>`,
+      `<a class="step-btn" href="tel:${esc(callPhone)}">Call Now</a>`
+    ];
 
-  // Report panel
-  if ($('rptText')) {
-    $('rptText').innerHTML = `
-      <div><strong>Subject:</strong> ${esc(safeResult.reportSubject || 'City Service Request')}</div>
-      <div style="margin-top:10px;">${nl2br(safeResult.reportBody || '')}</div>
-    `;
-  }
-  if ($('reportCard')) $('reportCard').style.display = 'block';
+    if ($('rSteps')) {
+      $('rSteps').innerHTML = steps.map((s, i) => `
+        <div class="step-card">
+          <div class="step-num ${stepColors[i] || 'step-num-3'}">${i + 1}</div>
+          <div class="step-title">${stepLabels[i] || `Step ${i + 1}`}</div>
+          <div class="step-desc">${esc(s)}</div>
+          ${stepBtns[i] || ''}
+        </div>
+      `).join('');
+    }
 
-  // Concierge note
-  if ($('rNote')) {
-    $('rNote').textContent = safeResult.conciergeNote || 'Hope this helps — have a good day!';
-  }
-  if ($('conciergeCard')) $('conciergeCard').style.display = 'flex';
+    // Contact
+    const dept = safeResult.contactDept || 'City of Montgomery';
+    const phone = safeResult.contactPhone || '311';
+    const extra = safeResult.contactExtra || '';
 
-  // Source chips
-  const sources = Array.isArray(safeResult.sources) && safeResult.sources.length
-    ? safeResult.sources
-    : ['City of Montgomery Open Data'];
+    if ($('rContact')) {
+      $('rContact').innerHTML = `
+        <div class="r-contact-main">
+          📞 <strong>${esc(dept)}</strong> · 
+          <a href="tel:${esc(phone)}">${esc(phone)}</a>
+          ${svc.emergency ? ` · Emergency: <a href="tel:${esc(svc.emergency)}">${esc(svc.emergency)}</a>` : ''}
+        </div>
+        <div class="r-contact-extra">${esc(extra)}</div>
+      `;
+    }
 
-  if ($('rChips')) {
-    $('rChips').innerHTML = sources.map((s) => `<span class="src-chip">${esc(s)}</span>`).join('');
-    $('rChips').style.display = 'flex';
-  }
+    // Report panel
+    if ($('rptText')) {
+      $('rptText').innerHTML = `
+        <div><strong>Subject:</strong> ${esc(safeResult.reportSubject || 'City Service Request')}</div>
+        <div style="margin-top:10px;">${nl2br(safeResult.reportBody || '')}</div>
+      `;
+    }
+    if ($('reportCard')) $('reportCard').style.display = 'block';
 
-  // Safety detail panel
-  if ($('sfx')) {
-    $('sfx').classList.add('on');
-  }
+    // Concierge note
+    if ($('rNote')) {
+      $('rNote').textContent = safeResult.conciergeNote || 'Hope this helps — have a good day!';
+    }
+    if ($('conciergeCard')) $('conciergeCard').style.display = 'flex';
 
-  // Show result area
-  if ($('resultArea')) {
-    $('resultArea').classList.add('on');
-    $('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Source chips
+    const sources = Array.isArray(safeResult.sources) && safeResult.sources.length
+      ? safeResult.sources
+      : ['City of Montgomery Open Data'];
+
+    if ($('rChips')) {
+      $('rChips').innerHTML = sources.map((s) => `<span class="src-chip">${esc(s)}</span>`).join('');
+      $('rChips').style.display = 'flex';
+    }
+
+    console.log('[UI] Main content rendered');
+
+    // Safety detail panel
+    if ($('sfx')) {
+      $('sfx').classList.add('on');
+    }
+
+    // Show result area
+    if ($('resultArea')) {
+      $('resultArea').classList.add('on');
+      $('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    console.log('[UI] renderResult completed');
+    console.log('[UI] resultArea class:', $('resultArea')?.className);
+    console.log('[UI] resultArea display:', $('resultArea') ? window.getComputedStyle($('resultArea')).display : '(missing)');
+    console.log('[UI] resultArea visibility:', $('resultArea') ? window.getComputedStyle($('resultArea')).visibility : '(missing)');
+    console.log('[UI] resultArea opacity:', $('resultArea') ? window.getComputedStyle($('resultArea')).opacity : '(missing)');
+  } catch (err) {
+    console.error('[UI] renderResult crashed:', err);
   }
 }
 
@@ -238,11 +257,3 @@ export function updateBrightDataCards(items, lastCrawlTime, configured) {
     status.textContent = configured ? 'Live' : 'Demo';
   }
 }
-
-
-
-
-
-
-
-
