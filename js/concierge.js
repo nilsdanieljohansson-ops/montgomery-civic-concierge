@@ -244,6 +244,26 @@ QUALITY BAR
 }
 
 /**
+ * Resolve correct backend endpoint
+ * Prevent old /api/concierge route from being used
+ */
+function resolveLlmEndpoint() {
+  const raw = CONFIG?.llm?.endpoint?.trim();
+
+  if (!raw) return '/api/claude';
+
+  if (
+    raw === '/api/concierge' ||
+    raw.endsWith('/api/concierge') ||
+    raw.includes('/api/concierge')
+  ) {
+    return '/api/claude';
+  }
+
+  return raw;
+}
+
+/**
  * Extract text from different backend/provider response shapes
  */
 function extractModelText(data) {
@@ -339,9 +359,13 @@ export async function askConcierge(query, zip, cityData, localContext = '') {
   }
 
   const systemPrompt = buildSystemPrompt(query, cityData, zip, localContext);
-  const { endpoint, model, maxTokens } = CONFIG.llm;
+  const endpoint = resolveLlmEndpoint();
+  const model = CONFIG?.llm?.model;
+  const maxTokens = CONFIG?.llm?.maxTokens ?? 1000;
 
   try {
+    console.log('[Concierge] Using endpoint:', endpoint);
+
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -358,8 +382,13 @@ export async function askConcierge(query, zip, cityData, localContext = '') {
       })
     });
 
-    if (res.status === 405 || res.status === 404) {
-      console.log('[Concierge] Proxy not available (static hosting) — using fallback');
+    if (res.status === 404) {
+      console.warn('[Concierge] API route not found:', endpoint);
+      return fallbackRoute(query);
+    }
+
+    if (res.status === 405) {
+      console.warn('[Concierge] Method not allowed for endpoint:', endpoint);
       return fallbackRoute(query);
     }
 
@@ -369,6 +398,11 @@ export async function askConcierge(query, zip, cityData, localContext = '') {
     }
 
     const data = await res.json();
+
+    if (data?.parsed && typeof data.parsed === 'object') {
+      return normalizeConciergeResponse(data.parsed, query);
+    }
+
     const rawText = extractModelText(data);
     return safeParseConciergeJson(rawText, query);
   } catch (err) {
