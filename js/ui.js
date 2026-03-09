@@ -1,123 +1,118 @@
 // ════════════════════════════════════════════
 // UI — DOM rendering & interaction handlers
+// Updated for redesigned card-based layout
 // ════════════════════════════════════════════
 
 import { SERVICES } from './sources.js';
 
 const $ = (id) => document.getElementById(id);
 
-/** Escape HTML to prevent XSS */
 export function esc(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
 }
 
-/** Current time string */
 export function timeStamp() {
   return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 }
 
 // ────────────────────────────
-// PULSE CARDS
+// PULSE CARDS (sidebar)
 // ────────────────────────────
 
 export function updatePulseCards(cityData) {
   const ts = timeStamp();
 
-  // Weather & Emergency
-  $('p1').textContent = `${cityData.shelters.length} tornado shelters and ${cityData.sirens.length} weather sirens mapped across Montgomery.`;
-  $('p1t').textContent = `Updated: ${ts}`;
+  $('p1').textContent = `${cityData.shelters.length} tornado shelters and ${cityData.sirens.length} weather sirens mapped`;
+  $('p1t').textContent = ts;
 
-  // Public Safety (911)
   const c = cityData.calls911.length;
-  $('p2').textContent = c > 0
-    ? `${c}+ recent 911 call records on file. Data updated monthly by Emergency Communications.`
-    : 'Connected to 911 call dataset.';
-  $('p2t').textContent = `Updated: ${ts}`;
+  $('p2').textContent = c > 0 ? `${c}+ recent 911 call records` : 'Connected to 911 dataset';
+  $('p2t').textContent = ts;
 
-  // Infrastructure
-  $('p3').textContent = cityData.paving.length > 0
-    ? `${cityData.paving.length} paving projects tracked. Continuously updated by Public Works.`
-    : 'Connected to paving & infrastructure data.';
-  $('p3t').textContent = `Updated: ${ts}`;
+  $('p3').textContent = cityData.paving.length > 0 ? `${cityData.paving.length} paving projects active` : 'Connected to infrastructure data';
+  $('p3t').textContent = ts;
 
-  // 311 Service Requests
-  $('p4').textContent = cityData.requests311.length > 0
-    ? `${cityData.requests311.length}+ recent 311 requests. Covers sanitation, code violations, and resident concerns.`
-    : 'Connected to 311 service request data.';
-  $('p4t').textContent = `Updated: ${ts}`;
+  $('p4').textContent = cityData.requests311.length > 0 ? `${cityData.requests311.length}+ recent service requests` : 'Connected to 311 data';
+  $('p4t').textContent = ts;
 }
 
 // ────────────────────────────
-// RESULT CARD
+// RESULT RENDERING
 // ────────────────────────────
 
 export function renderResult(result) {
   const svc = SERVICES[result.categoryKey] || SERVICES.council;
 
-  // Category header
+  // Issue header
   $('rIcon').textContent = svc.icon;
   $('rCat').textContent = result.category;
+  $('rTag').textContent = svc.cat;
 
-  // Safety badges (header + inline + panel)
+  // Safety badge
   const level = result.safetyLevel || 'green';
   const labels = { green: 'All Clear', yellow: 'Advisory Nearby', red: 'Active Alert' };
-  const dotClass = { green: 'bd-ok', yellow: 'bd-w', red: 'bd-r' };
-  const badgeClass = { green: 'ok', yellow: 'w', red: 'r' };
-
-  $('hdrDot').className = `bd ${dotClass[level]}`;
   $('hdrBadgeTxt').textContent = labels[level];
-
-  $('rBadge').className = `ib ${badgeClass[level]}`;
-  $('rBadgeTxt').textContent = labels[level];
-
-  $('sfx').className = `sfx ${badgeClass[level]}-x`;
   $('sfxTxt').textContent = result.safetyNote || 'No active alerts.';
-
   $('badgePanelTxt').textContent = result.safetyNote || 'No active advisories detected.';
 
-  // Steps
-  $('rSteps').innerHTML = (result.steps || [])
-    .map((s) => `<li>${esc(s)}</li>`)
-    .join('');
+  // Safety card color
+  const card = $('safetyCard');
+  if (level === 'red') { card.style.background = '#D64045'; }
+  else if (level === 'yellow') { card.style.background = '#b8860b'; }
+  else { card.style.background = '#0B3C5D'; }
+
+  // Steps — horizontal card grid
+  const steps = result.steps || [];
+  const stepColors = ['step-num-1', 'step-num-2', 'step-num-3'];
+  const stepLabels = ['Report Issue', 'Track Status', 'Contact Info'];
+  const stepBtns = [
+    `<button class="step-btn step-btn-primary" onclick="generateReport()">Start Report</button>`,
+    `<button class="step-btn">Track Existing</button>`,
+    `<button class="step-btn">Call Now</button>`,
+  ];
+
+  $('rSteps').innerHTML = steps.map((s, i) => `
+    <div class="step-card">
+      <div class="step-num ${stepColors[i] || 'step-num-3'}">${i + 1}</div>
+      <div class="step-title">${i < stepLabels.length ? stepLabels[i] : 'Step ' + (i+1)}</div>
+      <div class="step-desc">${esc(s)}</div>
+      ${i < stepBtns.length ? stepBtns[i] : ''}
+    </div>
+  `).join('');
 
   // Contact
-  let contactHTML = `
-    <div class="ct-line"><b>Department:</b> ${esc(result.contactDept)}</div>
-    <div class="ct-line"><b>Phone:</b> <a href="tel:${result.contactPhone}">${esc(result.contactPhone)}</a></div>
+  $('rContact').innerHTML = `
+    📞 <strong>${esc(result.contactDept)}</strong> · 
+    <a href="tel:${result.contactPhone}">${esc(result.contactPhone)}</a> · 
+    Mon–Fri, 8AM–5PM
+    ${svc.emergency ? ` · Emergency: <a href="tel:${svc.emergency}">${svc.emergency}</a>` : ''}
   `;
-  if (result.contactExtra) {
-    contactHTML += `<div class="ct-line"><b>Info:</b> ${esc(result.contactExtra)}</div>`;
-  }
-  if (svc.emergency) {
-    contactHTML += `<div class="ct-line"><b>Emergency:</b> <a href="tel:${svc.emergency}">${svc.emergency}</a></div>`;
-  }
-  $('rContact').innerHTML = contactHTML;
 
-  // Source chips
-  const sources = result.sources || ['City of Montgomery Open Data'];
-  $('rChips').innerHTML = sources
-    .map((s) => `<span class="chip">${esc(s)}</span>`)
-    .join('');
+  // Report panel — pre-fill but show
+  $('rptText').textContent = `Subject: ${result.reportSubject}\n\n${result.reportBody}`;
+  $('reportCard').style.display = 'block';
 
   // Concierge note
   $('rNote').textContent = result.conciergeNote || 'Hope this helps — have a good day!';
+  $('conciergeCard').style.display = 'flex';
 
-  // Reset report
-  $('rptOut').classList.remove('on');
+  // Source chips
+  const sources = result.sources || ['City of Montgomery Open Data'];
+  $('rChips').innerHTML = sources.map((s) => `<span class="src-chip">${esc(s)}</span>`).join('');
+  $('rChips').style.display = 'flex';
 
-  // Show result card
+  // Show result
   $('resultArea').classList.add('on');
   $('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ────────────────────────────
-// LOADING STATE
+// LOADING
 // ────────────────────────────
 
 export function showLoading() {
-  $('dataPills').style.display = 'none';
   $('resultArea').classList.remove('on');
   $('loader').classList.add('on');
   $('sendBtn').disabled = true;
@@ -128,49 +123,37 @@ export function hideLoading() {
   $('sendBtn').disabled = false;
 }
 
-
 // ────────────────────────────
 // BRIGHT DATA CARDS
 // ────────────────────────────
 
-const BD_ICONS = {
-  announcements: '📢',
-  safety: '🔴',
-  infrastructure: '🚧',
-  events: '🎉',
-  government: '🏛️',
-};
+const BD_ICONS = { announcements: '📢', safety: '🔴', infrastructure: '🚧', events: '🎉', government: '🏛️' };
+const BD_COLORS = { announcements: 'pbar-blue', safety: 'pbar-red', infrastructure: 'pbar-warn', events: 'pbar-green', government: 'pbar-blue' };
+const BD_CATS = { announcements: 'pcat-blue', safety: 'pcat-red', infrastructure: 'pcat-warn', events: 'pcat-green', government: 'pcat-blue' };
 
 export function updateBrightDataCards(items, lastCrawlTime, configured) {
   const container = $('brightDataCards');
   if (!container) return;
 
   if (!items || !items.length) {
-    container.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:0.5rem 0;">No web data loaded yet.</div>';
+    container.innerHTML = '<div class="bd-ph">No web data loaded yet.</div>';
     return;
   }
 
   container.innerHTML = items.map((item) => `
-    <div class="pulse-card">
-      <div class="pulse-header">
-        <div class="pulse-icon bd-icon">${BD_ICONS[item.category] || '🌐'}</div>
-        <div class="pulse-title">${esc(item.label)}</div>
-      </div>
-      <div class="pulse-body">${esc(item.snippet.slice(0, 180))}${item.snippet.length > 180 ? '...' : ''}</div>
-      <div class="pulse-meta">
-        <span>Updated: ${lastCrawlTime}</span>
-        <span class="bd-source-chip">
-          <img src="https://brightdata.com/favicon.ico" width="11" height="11" alt="" style="vertical-align:-1px;margin-right:3px">Bright Data
-        </span>
+    <div class="pulse-item">
+      <div class="pbar ${BD_COLORS[item.category] || 'pbar-blue'}"></div>
+      <div class="pcontent">
+        <div class="pcat ${BD_CATS[item.category] || 'pcat-blue'}">${BD_ICONS[item.category] || '🌐'} ${esc(item.label)}</div>
+        <div class="ptitle">${esc(item.snippet.slice(0, 120))}${item.snippet.length > 120 ? '...' : ''}</div>
+        <div class="pmeta"><span>${lastCrawlTime}</span><span class="bd-source-chip"><img src="https://brightdata.com/favicon.ico" width="10" height="10" alt="" style="vertical-align:-1px;margin-right:2px">Bright Data</span></div>
       </div>
     </div>
   `).join('');
 
-  // Update status indicator
   const status = $('bdStatus');
   if (status) {
-    status.innerHTML = configured
-      ? '<span class="bd-live">Live</span>'
-      : '<span class="bd-demo">Demo</span>';
+    status.className = configured ? 'bd-live' : 'bd-demo';
+    status.textContent = configured ? 'Live' : 'Demo';
   }
 }
