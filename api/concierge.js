@@ -1,4 +1,4 @@
-const MODEL = 'claude-3-haiku-20240307';
+const MODEL = 'claude-haiku-4-5-20251001';';
 const ANTHROPIC_VERSION = '2023-06-01';
 const REQUEST_TIMEOUT_MS = 12000;
 
