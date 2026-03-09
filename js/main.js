@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════
 // MAIN — Application entry point
-// Complete version synced with current HTML
+// Complete version with local civic context injection
 // ════════════════════════════════════════════
 
 import { SOURCES } from './sources.js';
@@ -34,9 +34,126 @@ function safeEl(id) {
   return $(id);
 }
 
-function setText(id, value) {
-  const el = safeEl(id);
-  if (el) el.textContent = value;
+function firstAttr(row = {}) {
+  return row?.attributes || row || {};
+}
+
+function pickFields(items = [], fields = [], limit = 3) {
+  return items
+    .slice(0, limit)
+    .map((item) => {
+      const a = firstAttr(item);
+      const obj = {};
+      fields.forEach((field) => {
+        if (a[field] !== undefined && a[field] !== null && String(a[field]).trim() !== '') {
+          obj[field] = String(a[field]).trim();
+        }
+      });
+      return obj;
+    })
+    .filter((obj) => Object.keys(obj).length > 0);
+}
+
+function buildLocalContext(query, zip, cityData) {
+  const q = String(query || '').toLowerCase();
+  const lines = [];
+
+  lines.push('Local Montgomery civic data context is available.');
+  if (zip) lines.push(`Resident ZIP code provided: ${zip}.`);
+
+  lines.push(`Loaded dataset counts: shelters=${cityData.shelters.length}, sirens=${cityData.sirens.length}, calls911=${cityData.calls911.length}, requests311=${cityData.requests311.length}, paving=${cityData.paving.length}.`);
+
+  const isShelter = /tornado|storm|shelter|ema|emergency management|weather/i.test(q);
+  const isRoad = /pothole|road|street|sidewalk|drain|drainage|paving|infrastructure|streetlight|traffic signal/i.test(q);
+  const isTrash = /trash|garbage|pickup|dumping|litter|bulk pickup|sanitation/i.test(q);
+  const isFireInfo = /fire station|fire department|fire rescue/i.test(q);
+  const isEmergency = /fire in my building|building on fire|active fire|medical emergency|call 911|crime in progress/i.test(q);
+
+  if (isShelter) {
+    const shelterSamples = pickFields(cityData.shelters, ['SHELTER', 'ST_NUMBER', 'ST_NAME', 'TYPE', 'FULLADDR', 'ADDRESS'], 3);
+    const sirenSamples = pickFields(cityData.sirens, ['NAME', 'LOCATION', 'ADDRESS', 'TYPE'], 3);
+
+    lines.push(`Tornado shelter records available: ${cityData.shelters.length}.`);
+    if (shelterSamples.length) {
+      lines.push(`Sample shelter records: ${JSON.stringify(shelterSamples)}.`);
+    }
+
+    lines.push(`Weather siren records available: ${cityData.sirens.length}.`);
+    if (sirenSamples.length) {
+      lines.push(`Sample siren records: ${JSON.stringify(sirenSamples)}.`);
+    }
+
+    lines.push('Use this context to make shelter guidance feel local, but do not claim an exact nearest location unless the context explicitly supports it.');
+  }
+
+  if (isRoad) {
+    const pavingSamples = pickFields(cityData.paving, ['FULLNAME', 'StreetName', 'DistrictDesc', 'From_'], 3);
+    const requestSamples = pickFields(cityData.requests311, ['Request_Type', 'Department', 'Address', 'Create_Date'], 3);
+
+    lines.push(`Paving project records available: ${cityData.paving.length}.`);
+    if (pavingSamples.length) {
+      lines.push(`Sample paving records: ${JSON.stringify(pavingSamples)}.`);
+    }
+
+    lines.push(`311 request records available: ${cityData.requests311.length}.`);
+    if (requestSamples.length) {
+      lines.push(`Sample 311 request records: ${JSON.stringify(requestSamples)}.`);
+    }
+
+    lines.push('Use this context to improve routing for roads, street maintenance, drainage, streetlights, or infrastructure-related issues.');
+  }
+
+  if (isTrash) {
+    const requestSamples = pickFields(cityData.requests311, ['Request_Type', 'Department', 'Address', 'Create_Date'], 3);
+
+    lines.push(`311 sanitation-related routing may be supported by ${cityData.requests311.length} recent request records.`);
+    if (requestSamples.length) {
+      lines.push(`Sample 311 request records: ${JSON.stringify(requestSamples)}.`);
+    }
+  }
+
+  if (isFireInfo) {
+    const callSamples = pickFields(cityData.calls911, ['Call_Category', 'Call_Origin', 'Month', 'Year'], 3);
+
+    lines.push(`Recent 911 call records available: ${cityData.calls911.length}.`);
+    if (callSamples.length) {
+      lines.push(`Sample 911 call records: ${JSON.stringify(callSamples)}.`);
+    }
+
+    lines.push('If the request is only asking for a station location or department information, treat it as informational, not an active emergency.');
+  }
+
+  if (isEmergency) {
+    lines.push('The user language may indicate an active emergency. Prioritize safety and 911 guidance.');
+  }
+
+  if (brightDataContent.length) {
+    const relevantBright = brightDataContent
+      .filter((item) => {
+        const hay = `${item?.label || ''} ${item?.snippet || ''}`.toLowerCase();
+
+        if (isShelter && /weather|storm|alert|emergency|closure/i.test(hay)) return true;
+        if (isRoad && /road|closure|traffic|infrastructure|construction/i.test(hay)) return true;
+        if (isTrash && /city|service|cleanup|sanitation/i.test(hay)) return true;
+        if (isFireInfo && /safety|emergency|government/i.test(hay)) return true;
+
+        return false;
+      })
+      .slice(0, 2)
+      .map((item) => ({
+        category: item.category,
+        label: item.label,
+        snippet: String(item.snippet || '').slice(0, 180)
+      }));
+
+    if (relevantBright.length) {
+      lines.push(`Relevant public web context: ${JSON.stringify(relevantBright)}.`);
+    }
+  }
+
+  lines.push('Use local context only to improve relevance, phrasing, and routing. Do not invent exact locations, availability, or official details unless explicitly supported.');
+
+  return lines.join('\n');
 }
 
 // ────────────────────────────
@@ -132,7 +249,13 @@ async function handleSubmit() {
   showLoading();
 
   try {
-    const result = await askConcierge(query, zip, cityData);
+    const localContext = buildLocalContext(query, zip, cityData);
+
+    console.log('[Submit] Query:', query);
+    console.log('[Submit] ZIP:', zip || '(none)');
+    console.log('[Submit] Local context:', localContext);
+
+    const result = await askConcierge(query, zip, cityData, localContext);
     currentResult = result;
     renderResult(result);
   } catch (err) {
