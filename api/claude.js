@@ -361,7 +361,7 @@ export default async function handler(req, res) {
       parsed: normalized
     });
   } catch (error) {
-    console.error('api/concierge fatal error:', error);
+    console.error('api/claude fatal error:', error);
     return sendJson(res, 500, {
       error: error?.message || 'Internal server error'
     });
