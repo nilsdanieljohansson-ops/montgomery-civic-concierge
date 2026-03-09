@@ -52,13 +52,13 @@ export function renderResult(result) {
   console.log('[UI] Rendering result:', safeResult);
   const key = (safeResult.categoryKey || '').toLowerCase();
 
-    const svc = SERVICES[key] || SERVICES.council || {
+  const svc = SERVICES[key] || SERVICES.council || {
     icon: '🏛️',
     cat: safeResult.category || 'City Services',
     emergency: ''
   };
 
-    // Issue header
+  // Issue header
   if ($('rIcon')) $('rIcon').textContent = svc.icon || '🏛️';
   if ($('rCat')) $('rCat').textContent = safeResult.category || svc.cat || 'City Services';
   if ($('rTag')) $('rTag').textContent = svc.cat !== (safeResult.category || '') ? svc.cat : 'City Service';
@@ -238,6 +238,7 @@ export function updateBrightDataCards(items, lastCrawlTime, configured) {
     status.textContent = configured ? 'Live' : 'Demo';
   }
 }
+
 
 
 
