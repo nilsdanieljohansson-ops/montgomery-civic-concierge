@@ -273,7 +273,7 @@ async function fetchAnthropic({ system, userPrompt, model, maxTokens, apiKey }) 
       },
       body: JSON.stringify({
         model: model || MODEL,
-        max_tokens: Number(maxTokens) || 500,
+        max_tokens: Number(maxTokens) || 700,
         temperature: 0,
         system,
         messages: [
