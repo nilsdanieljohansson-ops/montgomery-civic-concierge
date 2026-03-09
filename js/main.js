@@ -18,6 +18,7 @@ const $ = (id) => document.getElementById(id);
 // ────────────────────────────
 let currentResult = null;
 let brightDataContent = [];
+let isSubmitting = false;
 
 const cityData = {
   shelters: [],
@@ -34,12 +35,16 @@ function safeEl(id) {
   return $(id);
 }
 
+function safeArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
 function firstAttr(row = {}) {
   return row?.attributes || row || {};
 }
 
 function pickFields(items = [], fields = [], limit = 3) {
-  return items
+  return safeArray(items)
     .slice(0, limit)
     .map((item) => {
       const a = firstAttr(item);
@@ -58,10 +63,16 @@ function buildLocalContext(query, zip, cityData) {
   const q = String(query || '').toLowerCase();
   const lines = [];
 
+  const shelters = safeArray(cityData?.shelters);
+  const sirens = safeArray(cityData?.sirens);
+  const calls911 = safeArray(cityData?.calls911);
+  const requests311 = safeArray(cityData?.requests311);
+  const paving = safeArray(cityData?.paving);
+
   lines.push('Local Montgomery civic data context is available.');
   if (zip) lines.push(`Resident ZIP code provided: ${zip}.`);
 
-  lines.push(`Loaded dataset counts: shelters=${cityData.shelters.length}, sirens=${cityData.sirens.length}, calls911=${cityData.calls911.length}, requests311=${cityData.requests311.length}, paving=${cityData.paving.length}.`);
+  lines.push(`Loaded dataset counts: shelters=${shelters.length}, sirens=${sirens.length}, calls911=${calls911.length}, requests311=${requests311.length}, paving=${paving.length}.`);
 
   const isShelter = /tornado|storm|shelter|ema|emergency management|weather/i.test(q);
   const isRoad = /pothole|road|street|sidewalk|drain|drainage|paving|infrastructure|streetlight|traffic signal/i.test(q);
@@ -70,15 +81,15 @@ function buildLocalContext(query, zip, cityData) {
   const isEmergency = /fire in my building|building on fire|active fire|medical emergency|call 911|crime in progress/i.test(q);
 
   if (isShelter) {
-    const shelterSamples = pickFields(cityData.shelters, ['SHELTER', 'ST_NUMBER', 'ST_NAME', 'TYPE', 'FULLADDR', 'ADDRESS'], 3);
-    const sirenSamples = pickFields(cityData.sirens, ['NAME', 'LOCATION', 'ADDRESS', 'TYPE'], 3);
+    const shelterSamples = pickFields(shelters, ['SHELTER', 'ST_NUMBER', 'ST_NAME', 'TYPE', 'FULLADDR', 'ADDRESS'], 3);
+    const sirenSamples = pickFields(sirens, ['NAME', 'LOCATION', 'ADDRESS', 'TYPE'], 3);
 
-    lines.push(`Tornado shelter records available: ${cityData.shelters.length}.`);
+    lines.push(`Tornado shelter records available: ${shelters.length}.`);
     if (shelterSamples.length) {
       lines.push(`Sample shelter records: ${JSON.stringify(shelterSamples)}.`);
     }
 
-    lines.push(`Weather siren records available: ${cityData.sirens.length}.`);
+    lines.push(`Weather siren records available: ${sirens.length}.`);
     if (sirenSamples.length) {
       lines.push(`Sample siren records: ${JSON.stringify(sirenSamples)}.`);
     }
@@ -87,15 +98,15 @@ function buildLocalContext(query, zip, cityData) {
   }
 
   if (isRoad) {
-    const pavingSamples = pickFields(cityData.paving, ['FULLNAME', 'StreetName', 'DistrictDesc', 'From_'], 3);
-    const requestSamples = pickFields(cityData.requests311, ['Request_Type', 'Department', 'Address', 'Create_Date'], 3);
+    const pavingSamples = pickFields(paving, ['FULLNAME', 'StreetName', 'DistrictDesc', 'From_'], 3);
+    const requestSamples = pickFields(requests311, ['Request_Type', 'Department', 'Address', 'Create_Date'], 3);
 
-    lines.push(`Paving project records available: ${cityData.paving.length}.`);
+    lines.push(`Paving project records available: ${paving.length}.`);
     if (pavingSamples.length) {
       lines.push(`Sample paving records: ${JSON.stringify(pavingSamples)}.`);
     }
 
-    lines.push(`311 request records available: ${cityData.requests311.length}.`);
+    lines.push(`311 request records available: ${requests311.length}.`);
     if (requestSamples.length) {
       lines.push(`Sample 311 request records: ${JSON.stringify(requestSamples)}.`);
     }
@@ -104,18 +115,18 @@ function buildLocalContext(query, zip, cityData) {
   }
 
   if (isTrash) {
-    const requestSamples = pickFields(cityData.requests311, ['Request_Type', 'Department', 'Address', 'Create_Date'], 3);
+    const requestSamples = pickFields(requests311, ['Request_Type', 'Department', 'Address', 'Create_Date'], 3);
 
-    lines.push(`311 sanitation-related routing may be supported by ${cityData.requests311.length} recent request records.`);
+    lines.push(`311 sanitation-related routing may be supported by ${requests311.length} recent request records.`);
     if (requestSamples.length) {
       lines.push(`Sample 311 request records: ${JSON.stringify(requestSamples)}.`);
     }
   }
 
   if (isFireInfo) {
-    const callSamples = pickFields(cityData.calls911, ['Call_Category', 'Call_Origin', 'Month', 'Year'], 3);
+    const callSamples = pickFields(calls911, ['Call_Category', 'Call_Origin', 'Month', 'Year'], 3);
 
-    lines.push(`Recent 911 call records available: ${cityData.calls911.length}.`);
+    lines.push(`Recent 911 call records available: ${calls911.length}.`);
     if (callSamples.length) {
       lines.push(`Sample 911 call records: ${JSON.stringify(callSamples)}.`);
     }
@@ -127,7 +138,7 @@ function buildLocalContext(query, zip, cityData) {
     lines.push('The user language may indicate an active emergency. Prioritize safety and 911 guidance.');
   }
 
-  if (brightDataContent.length) {
+  if (safeArray(brightDataContent).length) {
     const relevantBright = brightDataContent
       .filter((item) => {
         const hay = `${item?.label || ''} ${item?.snippet || ''}`.toLowerCase();
@@ -141,9 +152,9 @@ function buildLocalContext(query, zip, cityData) {
       })
       .slice(0, 2)
       .map((item) => ({
-        category: item.category,
-        label: item.label,
-        snippet: String(item.snippet || '').slice(0, 180)
+        category: item?.category || '',
+        label: item?.label || '',
+        snippet: String(item?.snippet || '').slice(0, 180)
       }));
 
     if (relevantBright.length) {
@@ -175,11 +186,11 @@ async function loadCityData() {
       arcQuery(find('paving'), { resultRecordCount: '20' }),
     ]);
 
-    cityData.shelters = sh.status === 'fulfilled' ? sh.value : [];
-    cityData.sirens = si.status === 'fulfilled' ? si.value : [];
-    cityData.calls911 = c9.status === 'fulfilled' ? c9.value : [];
-    cityData.requests311 = r3.status === 'fulfilled' ? r3.value : [];
-    cityData.paving = pv.status === 'fulfilled' ? pv.value : [];
+    cityData.shelters = sh.status === 'fulfilled' ? safeArray(sh.value) : [];
+    cityData.sirens = si.status === 'fulfilled' ? safeArray(si.value) : [];
+    cityData.calls911 = c9.status === 'fulfilled' ? safeArray(c9.value) : [];
+    cityData.requests311 = r3.status === 'fulfilled' ? safeArray(r3.value) : [];
+    cityData.paving = pv.status === 'fulfilled' ? safeArray(pv.value) : [];
 
     const totalRecords =
       cityData.shelters.length +
@@ -201,11 +212,14 @@ async function loadCityData() {
   updatePulseCards(cityData);
 
   try {
-    brightDataContent = await loadBrightData();
+    const bright = await loadBrightData();
+    brightDataContent = safeArray(bright);
     updateBrightDataCards(brightDataContent, getLastCrawlTime(), isConfigured());
     console.log('[Init] Bright Data loaded:', brightDataContent.length, 'items');
   } catch (err) {
+    brightDataContent = [];
     console.warn('[Init] Bright Data load failed:', err);
+    updateBrightDataCards([], getLastCrawlTime(), isConfigured());
   }
 
   console.log('[Init] City data loaded:', {
@@ -233,6 +247,11 @@ async function loadDemoPulse() {
 
     console.log('[Init] Demo pulse data loaded');
   } catch (e) {
+    cityData.shelters = [];
+    cityData.sirens = [];
+    cityData.calls911 = [];
+    cityData.requests311 = [];
+    cityData.paving = [];
     console.warn('[Init] Demo file load failed:', e);
   }
 }
@@ -241,11 +260,14 @@ async function loadDemoPulse() {
 // SUBMIT HANDLER
 // ────────────────────────────
 async function handleSubmit() {
+  if (isSubmitting) return;
+
   const query = safeEl('queryInput')?.value?.trim() || '';
   if (!query) return;
 
   const zip = safeEl('zipInput')?.value?.trim() || '';
 
+  isSubmitting = true;
   showLoading();
 
   try {
@@ -256,14 +278,15 @@ async function handleSubmit() {
     console.log('[Submit] Local context:', localContext);
 
     const result = await askConcierge(query, zip, cityData, localContext);
-    currentResult = result;
-    renderResult(result);
+    currentResult = result || fallbackRoute(query);
+    renderResult(currentResult);
   } catch (err) {
     console.error('[Submit] Error:', err);
     currentResult = fallbackRoute(query);
     renderResult(currentResult);
   } finally {
     hideLoading();
+    isSubmitting = false;
   }
 }
 
@@ -334,11 +357,17 @@ function toggleSafetyDetail() {
 // ────────────────────────────
 function bindKeyboard() {
   safeEl('queryInput')?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') handleSubmit();
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit();
+    }
   });
 
   safeEl('zipInput')?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') handleSubmit();
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit();
+    }
   });
 }
 
