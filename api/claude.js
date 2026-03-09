@@ -50,6 +50,9 @@ REPORT WRITING RULES
 - Keep the tone professional, practical, and concise.
 - When the request is about reporting an issue, describe the issue clearly.
 - When the request is informational, write an inquiry instead of an incident report.
+- For information requests, the report should be written as a short inquiry, not as a complaint.
+- Do not invent addresses, dates, names, phone numbers, or incident details.
+- Use placeholders like [address], [location], or [date] only when needed.
 
 MODE RULE
 - If the user is reporting a city problem, write the report as a service report.
