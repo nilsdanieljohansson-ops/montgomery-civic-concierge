@@ -4,39 +4,70 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Montgomery Civic Concierge | AI-Powered City Service Assistant</title>
-  <meta name="description" content="AI-powered civic assistant for Montgomery residents. Find the right city service, report issues, and stay informed with city data and public web intelligence.">
+  <meta
+    name="description"
+    content="AI-powered civic assistant for Montgomery residents. Find the right city service, report issues, and stay informed with city data and public web intelligence."
+  >
   <meta name="theme-color" content="#0B3C5D">
 
+  <!-- Social sharing -->
   <meta property="og:title" content="Montgomery Civic Concierge | AI-Powered City Service Assistant">
-  <meta property="og:description" content="AI-powered civic assistant for Montgomery residents. Find the right city service, report issues, and stay informed with city data and public web intelligence.">
+  <meta
+    property="og:description"
+    content="AI-powered civic assistant for Montgomery residents. Find the right city service, report issues, and stay informed with city data and public web intelligence."
+  >
   <meta property="og:type" content="website">
   <meta property="og:image" content="/og-image.png">
-  <meta property="og:url" content="montgomery-civic-concierge.vercel.app">
+  <meta property="og:url" content="https://montgomery-civic-concierge.vercel.app/">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Montgomery Civic Concierge | AI-Powered City Service Assistant">
-  <meta name="twitter:description" content="AI-powered civic assistant for Montgomery residents. Find the right city service, report issues, and stay informed with city data and public web intelligence.">
+  <meta
+    name="twitter:description"
+    content="AI-powered civic assistant for Montgomery residents. Find the right city service, report issues, and stay informed with city data and public web intelligence."
+  >
   <meta name="twitter:image" content="/og-image.png">
 
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
 
+  <!-- Icons -->
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
+  <!-- Styles -->
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+  <noscript>
+    <div class="noscript-msg" role="alert">
+      This app requires JavaScript to load Montgomery Civic Concierge.
+    </div>
+  </noscript>
 
   <!-- ═══ HEADER ═══ -->
   <header class="header">
     <div class="header-inner">
-      <div class="header-logo">
-        <div class="logo-mark">
-          <svg viewBox="0 0 44 44" fill="none" aria-hidden="true">
-            <circle cx="22" cy="22" r="20" fill="#0B3C5D"/>
-            <text x="22" y="27" text-anchor="middle" fill="white" font-family="Inter" font-weight="700" font-size="16">MC</text>
+      <div class="header-logo" aria-label="Montgomery Civic Concierge">
+        <div class="logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 44 44" fill="none" aria-hidden="true" focusable="false">
+            <circle cx="22" cy="22" r="20" fill="#0B3C5D"></circle>
+            <text
+              x="22"
+              y="27"
+              text-anchor="middle"
+              fill="white"
+              font-family="Inter"
+              font-weight="700"
+              font-size="16"
+            >
+              MC
+            </text>
           </svg>
         </div>
         <div class="logo-text">
@@ -46,42 +77,45 @@
       </div>
 
       <div class="header-right">
-        <div class="hdr-stat">
-          <span class="hdr-dot"></span>
+        <div class="hdr-stat" aria-live="polite">
+          <span class="hdr-dot" aria-hidden="true"></span>
           <span id="dsCount">0</span> datasets
         </div>
-        <button class="hdr-pill" onclick="toggleTester()">⚙ Data Tester</button>
+        <button type="button" class="hdr-pill" onclick="toggleTester()">
+          ⚙ Data Tester
+        </button>
       </div>
     </div>
   </header>
 
   <main class="main">
     <div class="grid">
-
       <!-- ═══ LEFT ═══ -->
       <div class="col-l">
-
         <!-- Hero -->
-        <section class="hero">
+        <section class="hero" aria-labelledby="heroTitle">
           <div class="hero-kicker">Built for the World Wide Vibes Hackathon</div>
 
-          <h1>Find the right city service — instantly.</h1>
+          <h1 id="heroTitle">Find the right city service — instantly.</h1>
 
           <p>
-            Ask a question and Montgomery Civic Concierge will guide you to the correct department,
-            suggest next steps, and help you prepare a ready-to-send report using city data and public web intelligence.
+            Ask a question and Montgomery Civic Concierge routes you to the right city service,
+            recommends next steps, and helps generate a ready-to-send report using city data
+            and public web intelligence.
           </p>
 
-          <div class="hero-builtwith">
+          <div class="hero-builtwith" aria-label="Technology highlights">
             <span>Built with Montgomery Open Data</span>
-            <span>•</span>
+            <span aria-hidden="true">•</span>
             <span>Bright Data</span>
-            <span>•</span>
+            <span aria-hidden="true">•</span>
             <span>AI Concierge Routing</span>
           </div>
 
-          <div class="search-bar">
-            <div class="search-accent"></div>
+          <form class="search-bar" onsubmit="handleSubmit(); return false;" aria-label="Ask a city services question">
+            <div class="search-accent" aria-hidden="true"></div>
+
+            <label class="sr-only" for="queryInput">Ask a city services question</label>
             <input
               id="queryInput"
               class="search-q"
@@ -89,63 +123,82 @@
               autocomplete="off"
               aria-label="Ask a city services question"
             >
+
+            <label class="sr-only" for="zipInput">ZIP code</label>
             <input
               id="zipInput"
               class="search-z"
               placeholder="ZIP Code"
+              inputmode="numeric"
+              pattern="[0-9]{5}"
               maxlength="5"
               aria-label="ZIP code"
             >
-            <button class="search-btn" id="sendBtn" onclick="handleSubmit()">
+
+            <button type="submit" class="search-btn" id="sendBtn">
               Get Help
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7"></path>
               </svg>
             </button>
-          </div>
+          </form>
 
-          <div class="hero-examples">
+          <div class="hero-examples" aria-label="Example questions">
             <span class="hero-examples-label">Try asking:</span>
             <span>How do I report a pothole?</span>
             <span>Where is the nearest tornado shelter?</span>
             <span>How do I report a code violation?</span>
           </div>
 
-          <div class="qtags">
-            <button onclick="setQuery('My trash wasn\'t picked up')">🗑️ Missed pickup</button>
-            <button onclick="setQuery('I need a business license')">🏢 Business license</button>
-            <button onclick="setQuery('Pothole on my street')">🛣️ Pothole</button>
-            <button onclick="setQuery('Streetlight is out near my house')">💡 Streetlight out</button>
-            <button onclick="setQuery('Where is the nearest tornado shelter?')">⚠️ Tornado shelter</button>
-            <button onclick="setQuery('I need a construction permit')">🏗️ Building permit</button>
-            <button onclick="setQuery('There is an abandoned car on my block')">🚗 Abandoned vehicle</button>
-            <button onclick="setQuery('Overgrown lot with code violations')">🏘️ Code violation</button>
-            <button onclick="setQuery('Where are the nearest parks and trails?')">🌳 Parks &amp; trails</button>
-            <button onclick="setQuery('I want to report illegal dumping')">♻️ Illegal dumping</button>
-            <button onclick="setQuery('What food safety scores does a restaurant have?')">🍽️ Food safety</button>
-            <button onclick="setQuery('I need to find a nearby pharmacy')">💊 Pharmacy locator</button>
-            <button onclick="setQuery('Road construction is blocking my route')">🚧 Road closure</button>
-            <button onclick="setQuery('I need information about flood zones')">🌊 Flood zones</button>
-            <button onclick="setQuery('Where is the nearest fire station?')">🚒 Fire station</button>
-            <button onclick="setQuery('Traffic signal is not working')">🚦 Traffic signal</button>
+          <div class="qtags" aria-label="Quick question shortcuts">
+            <button type="button" onclick="setQuery('My trash wasn\\'t picked up')">🗑️ Missed pickup</button>
+            <button type="button" onclick="setQuery('I need a business license')">🏢 Business license</button>
+            <button type="button" onclick="setQuery('Pothole on my street')">🛣️ Pothole</button>
+            <button type="button" onclick="setQuery('Streetlight is out near my house')">💡 Streetlight out</button>
+            <button type="button" onclick="setQuery('Where is the nearest tornado shelter?')">⚠️ Tornado shelter</button>
+            <button type="button" onclick="setQuery('I need a construction permit')">🏗️ Building permit</button>
+            <button type="button" onclick="setQuery('There is an abandoned car on my block')">🚗 Abandoned vehicle</button>
+            <button type="button" onclick="setQuery('Overgrown lot with code violations')">🏘️ Code violation</button>
+            <button type="button" onclick="setQuery('Where are the nearest parks and trails?')">🌳 Parks &amp; trails</button>
+            <button type="button" onclick="setQuery('I want to report illegal dumping')">♻️ Illegal dumping</button>
+            <button type="button" onclick="setQuery('What food safety scores does a restaurant have?')">🍽️ Food safety</button>
+            <button type="button" onclick="setQuery('I need to find a nearby pharmacy')">💊 Pharmacy locator</button>
+            <button type="button" onclick="setQuery('Road construction is blocking my route')">🚧 Road closure</button>
+            <button type="button" onclick="setQuery('I need information about flood zones')">🌊 Flood zones</button>
+            <button type="button" onclick="setQuery('Where is the nearest fire station?')">🚒 Fire station</button>
+            <button type="button" onclick="setQuery('Traffic signal is not working')">🚦 Traffic signal</button>
           </div>
         </section>
 
         <!-- Loading -->
-        <div class="loader" id="loader">
-          <div class="spinner"></div>
+        <div class="loader" id="loader" aria-live="polite" aria-atomic="true">
+          <div class="spinner" aria-hidden="true"></div>
           <div class="loader-t">Analyzing your request...</div>
           <div class="loader-s">Checking city services, safety context, and public web updates</div>
         </div>
 
         <!-- ═══ RESULT ═══ -->
-        <div class="result-area" id="resultArea">
-
+        <section
+          class="result-area"
+          id="resultArea"
+          aria-live="polite"
+          aria-atomic="true"
+          aria-label="Concierge results"
+        >
           <!-- Issue card -->
-          <div class="r-card">
+          <article class="r-card">
             <div class="r-top">
               <div class="r-issue-row">
-                <span class="r-icon" id="rIcon">🏛️</span>
+                <span class="r-icon" id="rIcon" aria-hidden="true">🏛️</span>
                 <span class="r-issue-label">Issue Detected:</span>
                 <span class="r-issue-name" id="rCat">—</span>
               </div>
@@ -153,101 +206,144 @@
             </div>
 
             <div class="r-steps-header">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B3C5D" stroke-width="2" aria-hidden="true">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#0B3C5D"
+                stroke-width="2"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
               </svg>
               Here’s what you can do next
             </div>
 
             <div class="r-steps" id="rSteps"></div>
             <div class="r-contact" id="rContact"></div>
-          </div>
+          </article>
 
           <!-- Report panel -->
-          <div class="rpt-card" id="reportCard" style="display:none">
+          <article class="rpt-card" id="reportCard" hidden>
             <div class="rpt-top">
               <span class="rpt-title">Ready-to-send report</span>
-              <button class="rpt-copy" id="copyBtn" onclick="copyReport()" title="Copy report">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <rect x="9" y="9" width="13" height="13" rx="2"/>
-                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+              <button
+                type="button"
+                class="rpt-copy"
+                id="copyBtn"
+                onclick="copyReport()"
+                title="Copy report"
+                aria-label="Copy report"
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
                 </svg>
               </button>
             </div>
             <div class="rpt-body" id="rptText"></div>
-            <button class="rpt-submit" onclick="copyReport()">
+            <button type="button" class="rpt-submit" onclick="copyReport()">
               Copy &amp; Submit
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7"></path>
               </svg>
             </button>
-          </div>
+          </article>
 
           <!-- Concierge note -->
-          <div class="cn-card" id="conciergeCard" style="display:none">
-            <span class="cn-icon">💬</span>
+          <article class="cn-card" id="conciergeCard" hidden>
+            <span class="cn-icon" aria-hidden="true">💬</span>
             <div>
               <div class="cn-title">Concierge Note</div>
               <div class="cn-text" id="rNote"></div>
             </div>
-          </div>
+          </article>
 
           <!-- Sources -->
-          <div class="src-row" id="rChips" style="display:none"></div>
-        </div>
+          <div class="src-row" id="rChips" hidden aria-label="Sources"></div>
+        </section>
 
         <!-- Safety detail -->
-        <div class="sfx" id="sfx">
+        <section class="sfx" id="sfx" aria-live="polite">
           <b>Safety Status:</b> <span id="sfxTxt">No active alerts.</span>
           <div class="sfx-d">
             This is an informational tool, not an official emergency system. In an emergency, call 911.
           </div>
-        </div>
+        </section>
 
         <!-- Data tester -->
-        <div class="tester" id="testerPanel">
+        <section class="tester" id="testerPanel" aria-labelledby="testerTitle">
           <div class="tester-hd">
             <div>
-              <h3>ArcGIS Endpoint Tester</h3>
+              <h3 id="testerTitle">ArcGIS Endpoint Tester</h3>
               <p>Verify data connections from Montgomery Open Data Portal</p>
             </div>
-            <button class="tester-btn" onclick="runTests()">Run Tests</button>
+            <button type="button" class="tester-btn" onclick="runTests()">Run Tests</button>
           </div>
+
           <table class="tester-tbl">
             <thead>
               <tr>
-                <th>Source</th>
-                <th>Type</th>
-                <th>Status</th>
-                <th>Sample Fields</th>
+                <th scope="col">Source</th>
+                <th scope="col">Type</th>
+                <th scope="col">Status</th>
+                <th scope="col">Sample Fields</th>
               </tr>
             </thead>
             <tbody id="testerBody"></tbody>
           </table>
-        </div>
+        </section>
       </div>
 
       <!-- ═══ RIGHT ═══ -->
-      <div class="col-r">
-
+      <aside class="col-r" aria-label="Sidebar panels">
         <!-- Safety badge -->
-        <div class="sb-card" id="safetyCard" onclick="toggleSafetyDetail()">
+        <button type="button" class="sb-card" id="safetyCard" onclick="toggleSafetyDetail()">
           <div class="sb-inner">
-            <span class="sb-icon" id="hdrDot">✦</span>
+            <span class="sb-icon" id="hdrDot" aria-hidden="true">✦</span>
             <div>
               <div class="sb-label">Safety Status</div>
               <div class="sb-value" id="hdrBadgeTxt">All Clear</div>
             </div>
           </div>
-          <button class="sb-link">
+          <span class="sb-link">
             View details
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M5 12h14M12 5l7 7-7 7"></path>
             </svg>
-          </button>
-        </div>
+          </span>
+        </button>
 
-        <div class="badge-panel" id="badgePanel">
+        <div class="badge-panel" id="badgePanel" aria-live="polite">
           <span id="badgePanelTxt">No active advisories detected.</span>
           <div class="bp-d">
             Not an official emergency system. In an emergency, call 911.
@@ -255,12 +351,21 @@
         </div>
 
         <!-- City Pulse -->
-        <div class="side-box">
+        <section class="side-box" aria-labelledby="cityPulseTitle">
           <div class="side-hd">
-            <div class="side-title">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 6v6l4 2"/>
+            <div class="side-title" id="cityPulseTitle">
+              <svg
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 6v6l4 2"></path>
               </svg>
               City Pulse
             </div>
@@ -272,55 +377,64 @@
           </div>
 
           <div class="pulse-stack">
-            <div class="pulse-item">
-              <div class="pbar pbar-warn"></div>
+            <article class="pulse-item">
+              <div class="pbar pbar-warn" aria-hidden="true"></div>
               <div class="pcontent">
                 <div class="pcat pcat-warn">Weather Alert</div>
                 <div class="ptitle" id="p1">Loading...</div>
                 <div class="pmeta"><span id="p1t">—</span><span>Source: EMA</span></div>
               </div>
-              <div class="pdot pdot-warn"></div>
-            </div>
+              <div class="pdot pdot-warn" aria-hidden="true"></div>
+            </article>
 
-            <div class="pulse-item">
-              <div class="pbar pbar-red"></div>
+            <article class="pulse-item">
+              <div class="pbar pbar-red" aria-hidden="true"></div>
               <div class="pcontent">
                 <div class="pcat pcat-red">Public Safety</div>
                 <div class="ptitle" id="p2">Loading...</div>
                 <div class="pmeta"><span id="p2t">—</span><span>Source: Montgomery PD</span></div>
               </div>
-              <div class="pdot pdot-blue"></div>
-            </div>
+              <div class="pdot pdot-blue" aria-hidden="true"></div>
+            </article>
 
-            <div class="pulse-item">
-              <div class="pbar pbar-green"></div>
+            <article class="pulse-item">
+              <div class="pbar pbar-green" aria-hidden="true"></div>
               <div class="pcontent">
                 <div class="pcat pcat-green">Infrastructure</div>
                 <div class="ptitle" id="p3">Loading...</div>
                 <div class="pmeta"><span id="p3t">—</span><span>Source: Public Works</span></div>
               </div>
-              <div class="pdot pdot-green"></div>
-            </div>
+              <div class="pdot pdot-green" aria-hidden="true"></div>
+            </article>
 
-            <div class="pulse-item">
-              <div class="pbar pbar-blue"></div>
+            <article class="pulse-item">
+              <div class="pbar pbar-blue" aria-hidden="true"></div>
               <div class="pcontent">
                 <div class="pcat pcat-blue">311 Requests</div>
                 <div class="ptitle" id="p4">Loading...</div>
                 <div class="pmeta"><span id="p4t">—</span><span>Source: Open Data</span></div>
               </div>
-              <div class="pdot pdot-blue"></div>
-            </div>
+              <div class="pdot pdot-blue" aria-hidden="true"></div>
+            </article>
           </div>
-        </div>
+        </section>
 
         <!-- Emergency -->
-        <div class="side-box">
+        <section class="side-box" aria-labelledby="emergencyTitle">
           <div class="side-hd">
-            <div class="side-title" style="color:#D64045">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#D64045" stroke-width="2" aria-hidden="true">
-                <path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"/>
-                <circle cx="12" cy="10" r="3"/>
+            <div class="side-title" id="emergencyTitle" style="color:#D64045">
+              <svg
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#D64045"
+                stroke-width="2"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
               </svg>
               Emergency Resources
             </div>
@@ -329,30 +443,72 @@
           <div class="emg-list">
             <a href="tel:911" class="emg-link">
               📞 911 / Police / Fire
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7"></path>
               </svg>
             </a>
 
-            <a href="#" class="emg-link" onclick="setQuery('Where is the nearest tornado shelter?');handleSubmit();return false">
+            <a
+              href="#"
+              class="emg-link"
+              onclick="setQuery('Where is the nearest tornado shelter?'); handleSubmit(); return false;"
+            >
               🏠 Find Shelter
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7"></path>
               </svg>
             </a>
 
             <div class="emg-tags">
-              <a href="https://opendata.montgomeryal.gov/" target="_blank" class="emg-tag">🌊 Flood Zones</a>
-              <a href="https://opendata.montgomeryal.gov/" target="_blank" class="emg-tag">🚒 Fire Stations</a>
+              <a
+                href="https://opendata.montgomeryal.gov/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="emg-tag"
+              >
+                🌊 Flood Zones
+              </a>
+              <a
+                href="https://opendata.montgomeryal.gov/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="emg-tag"
+              >
+                🚒 Fire Stations
+              </a>
             </div>
           </div>
-        </div>
+        </section>
 
         <!-- Bright Data -->
-        <div class="side-box bd-box">
+        <section class="side-box bd-box" aria-labelledby="webIntelTitle">
           <div class="bd-hd">
-            <div class="bd-brand">
-              <img src="https://brightdata.com/favicon.ico" width="14" height="14" alt="">
+            <div class="bd-brand" id="webIntelTitle">
+              <img
+                src="https://brightdata.com/favicon.ico"
+                width="14"
+                height="14"
+                alt=""
+                aria-hidden="true"
+              >
               Web Intelligence
             </div>
             <span id="bdStatus" class="bd-demo">Demo</span>
@@ -362,28 +518,35 @@
             Public web signals used to enrich city awareness and resident guidance.
           </div>
 
-          <div id="brightDataCards" class="bd-cards">
+          <div id="brightDataCards" class="bd-cards" aria-live="polite">
             <div class="bd-ph">Loading web data...</div>
           </div>
 
           <div class="bd-ft">
-            Powered by <a href="https://brightdata.com" target="_blank">Bright Data</a> · Public web data
+            Powered by
+            <a href="https://brightdata.com" target="_blank" rel="noopener noreferrer">Bright Data</a>
+            · Public web data
           </div>
-        </div>
-
-      </div>
+        </section>
+      </aside>
     </div>
   </main>
 
   <footer class="footer">
     <span>Built for the World Wide Vibes Hackathon</span>
     <span>City of Montgomery · AI Civic Concierge (Beta)</span>
-    <span>Not an official emergency system · <a href="https://opendata.montgomeryal.gov/" target="_blank">Data sources</a></span>
+    <span>
+      Not an official emergency system ·
+      <a
+        href="https://opendata.montgomeryal.gov/"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Data sources
+      </a>
+    </span>
   </footer>
 
   <script type="module" src="js/main.js"></script>
 </body>
 </html>
-
-
-
