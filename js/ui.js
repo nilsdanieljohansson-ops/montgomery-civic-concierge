@@ -52,13 +52,11 @@ export function renderResult(result) {
   console.log('[UI] Rendering result:', safeResult);
   const key = (safeResult.categoryKey || '').toLowerCase();
 
-  const svc =
-    SERVICES[key] ||
-    SERVICES.council || {
-      icon: '🏛️',
-      cat: safeResult.category || 'City Services',
-      emergency: ''
-    };
+    const svc = SERVICES[key] || SERVICES.council || {
+    icon: '🏛️',
+    cat: safeResult.category || 'City Services',
+    emergency: ''
+  };
 
     // Issue header
   if ($('rIcon')) $('rIcon').textContent = svc.icon || '🏛️';
@@ -93,7 +91,7 @@ export function renderResult(result) {
   const steps = Array.isArray(safeResult.steps) ? safeResult.steps.slice(0, 3) : [];
   const stepColors = ['step-num-1', 'step-num-2', 'step-num-3'];
   const stepLabels = ['Report Issue', 'Track Status', 'Contact Info'];
-  const stepBtns = [
+    const stepBtns = [
     `<button class="step-btn step-btn-primary" onclick="generateReport()">Start Report</button>`,
     `<button class="step-btn" type="button">Track Existing</button>`,
     `<button class="step-btn" type="button">Call Now</button>`
@@ -239,6 +237,7 @@ export function updateBrightDataCards(items, lastCrawlTime, configured) {
     status.textContent = configured ? 'Live' : 'Demo';
   }
 }
+
 
 
 
