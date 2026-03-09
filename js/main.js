@@ -139,15 +139,16 @@ function generateReport() {
   if (!currentResult) return;
   const text = `Subject: ${currentResult.reportSubject}\n\n${currentResult.reportBody}`;
   $('rptText').textContent = text;
-  $('rptOut').classList.add('on');
+  $('reportCard').style.display = 'block';
 }
 
 function copyReport() {
   const text = $('rptText').textContent;
   navigator.clipboard.writeText(text).then(() => {
     const btn = $('copyBtn');
-    btn.textContent = 'Copied!';
-    setTimeout(() => (btn.textContent = 'Copy'), 2000);
+    const original = btn.innerHTML;
+    btn.innerHTML = 'Copied!';
+    setTimeout(() => (btn.innerHTML = original), 2000);
   });
 }
 
@@ -193,3 +194,4 @@ $('queryInput').addEventListener('keydown', (e) => {
 // INIT
 // ────────────────────────────
 loadCityData();
+
