@@ -10,7 +10,6 @@
   >
   <meta name="theme-color" content="#0B3C5D">
 
-  <!-- Social sharing -->
   <meta property="og:title" content="Montgomery Civic Concierge | AI-Powered City Service Assistant">
   <meta
     property="og:description"
@@ -18,7 +17,7 @@
   >
   <meta property="og:type" content="website">
   <meta property="og:image" content="/og-image.png">
-  <meta property="og:url" content="https://montgomery-civic-concierge.vercel.app/">
+  <meta property="og:url" content="https://your-domain.com/">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Montgomery Civic Concierge | AI-Powered City Service Assistant">
@@ -28,7 +27,6 @@
   >
   <meta name="twitter:image" content="/og-image.png">
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -36,11 +34,9 @@
     rel="stylesheet"
   >
 
-  <!-- Icons -->
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-  <!-- Styles -->
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -50,7 +46,6 @@
     </div>
   </noscript>
 
-  <!-- ═══ HEADER ═══ -->
   <header class="header">
     <div class="header-inner">
       <div class="header-logo" aria-label="Montgomery Civic Concierge">
@@ -90,9 +85,7 @@
 
   <main class="main">
     <div class="grid">
-      <!-- ═══ LEFT ═══ -->
       <div class="col-l">
-        <!-- Hero -->
         <section class="hero" aria-labelledby="heroTitle">
           <div class="hero-kicker">Built for the World Wide Vibes Hackathon</div>
 
@@ -179,14 +172,12 @@
           </div>
         </section>
 
-        <!-- Loading -->
         <div class="loader" id="loader" aria-live="polite" aria-atomic="true">
           <div class="spinner" aria-hidden="true"></div>
-          <div class="loader-t">Analyzing your request...</div>
+          <div class="loader-t">✨ AI analyzing your civic request...</div>
           <div class="loader-s">Checking city services, safety context, and public web updates</div>
         </div>
 
-        <!-- ═══ RESULT ═══ -->
         <section
           class="result-area"
           id="resultArea"
@@ -194,7 +185,6 @@
           aria-atomic="true"
           aria-label="Concierge results"
         >
-          <!-- Issue card -->
           <article class="r-card">
             <div class="r-top">
               <div class="r-issue-row">
@@ -225,7 +215,6 @@
             <div class="r-contact" id="rContact"></div>
           </article>
 
-          <!-- Report panel -->
           <article class="rpt-card" id="reportCard" hidden>
             <div class="rpt-top">
               <span class="rpt-title">Ready-to-send report</span>
@@ -253,24 +242,41 @@
               </button>
             </div>
             <div class="rpt-body" id="rptText"></div>
-            <button type="button" class="rpt-submit" onclick="copyReport()">
-              Copy &amp; Submit
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                aria-hidden="true"
-                focusable="false"
-              >
-                <path d="M5 12h14M12 5l7 7-7 7"></path>
-              </svg>
-            </button>
+            <div class="rpt-actions">
+              <button type="button" class="rpt-submit" onclick="copyReport()">
+                Copy Report
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M5 12h14M12 5l7 7-7 7"></path>
+                </svg>
+              </button>
+              <button type="button" class="rpt-submit rpt-submit-secondary" onclick="openReportEmail()">
+                Open in Email
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M4 6h16v12H4z"></path>
+                  <path d="M22 6l-10 7L2 6"></path>
+                </svg>
+              </button>
+            </div>
           </article>
 
-          <!-- Concierge note -->
           <article class="cn-card" id="conciergeCard" hidden>
             <span class="cn-icon" aria-hidden="true">💬</span>
             <div>
@@ -279,11 +285,9 @@
             </div>
           </article>
 
-          <!-- Sources -->
           <div class="src-row" id="rChips" hidden aria-label="Sources"></div>
         </section>
 
-        <!-- Safety detail -->
         <section class="sfx" id="sfx" aria-live="polite">
           <b>Safety Status:</b> <span id="sfxTxt">No active alerts.</span>
           <div class="sfx-d">
@@ -291,7 +295,6 @@
           </div>
         </section>
 
-        <!-- Data tester -->
         <section class="tester" id="testerPanel" aria-labelledby="testerTitle">
           <div class="tester-hd">
             <div>
@@ -315,9 +318,7 @@
         </section>
       </div>
 
-      <!-- ═══ RIGHT ═══ -->
       <aside class="col-r" aria-label="Sidebar panels">
-        <!-- Safety badge -->
         <button type="button" class="sb-card" id="safetyCard" onclick="toggleSafetyDetail()">
           <div class="sb-inner">
             <span class="sb-icon" id="hdrDot" aria-hidden="true">✦</span>
@@ -350,7 +351,19 @@
           </div>
         </div>
 
-        <!-- City Pulse -->
+        <section class="side-box city-score-box" aria-labelledby="cityScoreTitle">
+          <div class="side-hd">
+            <div class="side-title" id="cityScoreTitle">City Health Score</div>
+            <span class="side-live">Live</span>
+          </div>
+
+          <div class="city-score-wrap">
+            <div class="city-score-value" id="cityHealthScore">92</div>
+            <div class="city-score-label">out of 100</div>
+            <div class="city-score-meta" id="cityHealthMeta">Based on city service signals and safety context</div>
+          </div>
+        </section>
+
         <section class="side-box" aria-labelledby="cityPulseTitle">
           <div class="side-hd">
             <div class="side-title" id="cityPulseTitle">
@@ -419,7 +432,6 @@
           </div>
         </section>
 
-        <!-- Emergency -->
         <section class="side-box" aria-labelledby="emergencyTitle">
           <div class="side-hd">
             <div class="side-title" id="emergencyTitle" style="color:#D64045">
@@ -498,7 +510,6 @@
           </div>
         </section>
 
-        <!-- Bright Data -->
         <section class="side-box bd-box" aria-labelledby="webIntelTitle">
           <div class="bd-hd">
             <div class="bd-brand" id="webIntelTitle">
