@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════
 // UI — DOM rendering & interaction handlers
-// Final synced version for updated HTML/CSS
+// Final synced version with shelter card support
 // ════════════════════════════════════════════
 
 import { SERVICES } from './sources.js';
@@ -55,6 +55,83 @@ function getStepLabels(result = {}) {
   }
 
   return ['Report Issue', 'Track Status', 'Contact Info'];
+}
+
+function buildDirectionsUrl(shelter = {}) {
+  if (shelter.address) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${shelter.address}, Montgomery, AL`)}`;
+  }
+
+  if (shelter.lat != null && shelter.lon != null) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${shelter.lat},${shelter.lon}`)}`;
+  }
+
+  return '#';
+}
+
+function renderShelterRecommendation(result = {}) {
+  const container = $('rShelter');
+  if (!container) return;
+
+  const shelterRecommendation = result?.shelterRecommendation;
+  const primary = shelterRecommendation?.primary || null;
+  const alternatives = Array.isArray(shelterRecommendation?.alternatives)
+    ? shelterRecommendation.alternatives
+    : [];
+
+  if (!primary) {
+    container.innerHTML = '';
+    container.hidden = true;
+    return;
+  }
+
+  const phoneHref = primary.phone
+    ? `tel:${String(primary.phone).replace(/[^\d+]/g, '')}`
+    : '';
+
+  container.innerHTML = `
+    <div class="shelter-card">
+      <div class="shelter-kicker">Safe Shelter Option</div>
+      <div class="shelter-name">${esc(primary.name || 'Tornado Shelter')}</div>
+
+      ${primary.address ? `<div class="shelter-row">📍 ${esc(primary.address)}</div>` : ''}
+      ${primary.phone ? `<div class="shelter-row">📞 ${esc(primary.phone)}</div>` : ''}
+      ${primary.accessibility ? `<div class="shelter-row">♿ ${esc(primary.accessibility)}</div>` : ''}
+      ${primary.capacity ? `<div class="shelter-row">👥 Capacity: ${esc(primary.capacity)}</div>` : ''}
+      ${primary.notes ? `<div class="shelter-row">📝 ${esc(primary.notes)}</div>` : ''}
+
+      <div class="shelter-why">
+        Best available tornado shelter match based on your request and currently loaded Montgomery safety data.
+      </div>
+
+      <div class="shelter-actions">
+        ${primary.phone ? `<a class="shelter-btn" href="${phoneHref}">📞 Call Shelter</a>` : ''}
+        <a
+          class="shelter-btn shelter-btn-secondary"
+          href="${buildDirectionsUrl(primary)}"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          🧭 Open Directions
+        </a>
+      </div>
+
+      ${alternatives.length ? `
+        <div class="shelter-alt">
+          <div class="shelter-alt-title">Other shelter options</div>
+          ${alternatives.map((item) => `
+            <div class="shelter-alt-item">
+              <strong>${esc(item.name || 'Shelter')}</strong>
+              ${item.address ? `<div>${esc(item.address)}</div>` : ''}
+              ${item.accessibility ? `<div>Accessibility: ${esc(item.accessibility)}</div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  container.hidden = false;
 }
 
 export function updatePulseCards(cityData = {}) {
@@ -156,6 +233,8 @@ export function renderResult(result) {
       `).join('');
     }
 
+    renderShelterRecommendation(safeResult);
+
     const dept = safeResult.contactDept || 'City of Montgomery';
     const phone = safeResult.contactPhone || '311';
     const extra = safeResult.contactExtra || '';
@@ -215,6 +294,7 @@ export function showLoading() {
   setHidden('reportCard', true);
   setHidden('conciergeCard', true);
   setHidden('rChips', true);
+  setHidden('rShelter', true);
 }
 
 export function hideLoading() {
