@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════
 // UI — DOM rendering & interaction handlers
-// Synced with updated HTML/CSS structure
+// Final synced version for updated HTML/CSS
 // ════════════════════════════════════════════
 
 import { SERVICES } from './sources.js';
@@ -27,6 +27,35 @@ function nl2br(str = '') {
 function setHidden(id, hidden) {
   const el = $(id);
   if (el) el.hidden = hidden;
+}
+
+function getStepLabels(result = {}) {
+  const key = String(result.categoryKey || '').toLowerCase();
+  const cat = String(result.category || '').toLowerCase();
+
+  const hay = `${key} ${cat}`;
+
+  if (/shelter|storm|weather|ema|emergency/.test(hay)) {
+    return ['Find Shelter', 'Safety Updates', 'Emergency Contact'];
+  }
+
+  if (/permit|license|business/.test(hay)) {
+    return ['Start Request', 'Check Status', 'Office Contact'];
+  }
+
+  if (/trash|garbage|pickup|dumping|sanitation/.test(hay)) {
+    return ['Report Service Issue', 'Track Pickup', 'Sanitation Contact'];
+  }
+
+  if (/pothole|road|street|sidewalk|drain|streetlight|traffic/.test(hay)) {
+    return ['Report Issue', 'Track Status', 'Public Works'];
+  }
+
+  if (/code|violation|abandoned|vehicle|property/.test(hay)) {
+    return ['Submit Report', 'Follow Up', 'Department Contact'];
+  }
+
+  return ['Report Issue', 'Track Status', 'Contact Info'];
 }
 
 // ────────────────────────────
@@ -108,18 +137,18 @@ export function renderResult(result) {
     const incomingSteps = Array.isArray(safeResult.steps) ? safeResult.steps.slice(0, 3) : [];
     const fallbackSteps = [
       'Start a report with the issue details and location.',
-      'Track the case or follow up with the responsible department.',
-      'Use the listed contact info if you need faster help.'
+      'Follow up with the responsible department or check an existing case.',
+      'Use the listed contact method if you need direct help.'
     ];
     const steps = incomingSteps.length ? incomingSteps : fallbackSteps;
 
     const stepColors = ['step-num-1', 'step-num-2', 'step-num-3'];
-    const stepLabels = ['Report Issue', 'Track Status', 'Contact Info'];
+    const stepLabels = getStepLabels(safeResult);
     const callPhone = safeResult.contactPhone || '311';
 
     const stepBtns = [
       `<button type="button" class="step-btn step-btn-primary" onclick="generateReport()">Start Report</button>`,
-      `<button type="button" class="step-btn">Track Existing</button>`,
+      `<button type="button" class="step-btn" onclick="trackStatus()">Track Existing</button>`,
       `<a class="step-btn" href="tel:${esc(callPhone)}">Call Now</a>`
     ];
 
@@ -150,14 +179,13 @@ export function renderResult(result) {
       `;
     }
 
-    // Report panel
+    // Report panel content only — do not auto-open
     if ($('rptText')) {
       $('rptText').innerHTML = `
         <div><strong>Subject:</strong> ${esc(safeResult.reportSubject || 'City Service Request')}</div>
         <div style="margin-top:10px;">${nl2br(safeResult.reportBody || '')}</div>
       `;
     }
-    setHidden('reportCard', false);
 
     // Concierge note
     if ($('rNote')) {
