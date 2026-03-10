@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════
 // MAIN — Application entry point
-// Synced with updated HTML/CSS/UI structure
+// Final synced version for updated HTML/CSS/UI
 // ════════════════════════════════════════════
 
 import { SOURCES } from './sources.js';
@@ -77,6 +77,10 @@ function buildPlainReportText(result) {
   const subject = r.reportSubject || 'City Service Request';
   const body = r.reportBody || '';
   return `Subject: ${subject}\n\n${body}`.trim();
+}
+
+function normalizePhone(phone = '') {
+  return String(phone).replace(/[^\d+]/g, '');
 }
 
 function buildLocalContext(query, zip, cityData) {
@@ -337,16 +341,41 @@ async function handleSubmit() {
 }
 
 // ────────────────────────────
-// REPORT HELPERS
+// REPORT / TRACK HELPERS
 // ────────────────────────────
 function generateReport() {
+  const card = safeEl('reportCard');
+  if (!card) return;
+
+  setHidden('reportCard', false);
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function trackStatus() {
   if (!currentResult) return;
 
-  const rptText = safeEl('rptText');
-  if (!rptText) return;
+  const trackUrl = String(currentResult.trackUrl || '').trim();
+  const phone = String(currentResult.contactPhone || '').trim();
+  const dept = String(currentResult.contactDept || 'the city department').trim();
 
-  rptText.textContent = buildPlainReportText(currentResult);
-  setHidden('reportCard', false);
+  if (trackUrl) {
+    window.open(trackUrl, '_blank', 'noopener,noreferrer');
+    return;
+  }
+
+  if (phone) {
+    const normalized = normalizePhone(phone);
+    const shouldCall = window.confirm(
+      `To track an existing case, contact ${dept} at ${phone}. Press OK to call.`
+    );
+
+    if (shouldCall && normalized) {
+      window.location.href = `tel:${normalized}`;
+    }
+    return;
+  }
+
+  window.alert(`To track an existing case, please contact ${dept}.`);
 }
 
 async function copyReport() {
@@ -429,6 +458,7 @@ function init() {
 // ────────────────────────────
 window.handleSubmit = handleSubmit;
 window.generateReport = generateReport;
+window.trackStatus = trackStatus;
 window.copyReport = copyReport;
 window.setQuery = setQuery;
 window.toggleBadgePanel = toggleBadgePanel;
