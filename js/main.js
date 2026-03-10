@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════
 // MAIN — Application entry point
-// Final synced version for updated HTML/CSS/UI
+// Final synced version with shelter enrichment
 // ════════════════════════════════════════════
 
 import { SOURCES } from './sources.js';
@@ -42,6 +42,16 @@ function safeArray(value) {
 
 function firstAttr(row = {}) {
   return row?.attributes || row || {};
+}
+
+function firstValue(obj = {}, keys = []) {
+  for (const key of keys) {
+    const val = obj?.[key];
+    if (val !== undefined && val !== null && String(val).trim() !== '') {
+      return String(val).trim();
+    }
+  }
+  return '';
 }
 
 function pickFields(items = [], fields = [], limit = 3) {
@@ -231,6 +241,134 @@ function buildLocalContext(query, zip, cityData) {
   return lines.join('\n');
 }
 
+function detectShelterNeed(query = '') {
+  const q = String(query || '').toLowerCase();
+
+  const keywords = [
+    'shelter',
+    'tornado',
+    'storm shelter',
+    'tornado shelter',
+    'severe weather',
+    'safe place',
+    'where can i go',
+    'need somewhere safe',
+    'emergency shelter'
+  ];
+
+  return {
+    needsShelter: keywords.some((word) => q.includes(word)),
+    urgency: /now|urgent|immediately|asap|right now/.test(q) ? 'high' : 'normal'
+  };
+}
+
+function normalizeShelterFeature(row = {}) {
+  const attrs = firstAttr(row);
+  const geom = row?.geometry || {};
+
+  const streetNumber = firstValue(attrs, ['ST_NUMBER', 'NUMBER']);
+  const streetName = firstValue(attrs, ['ST_NAME', 'STREET', 'ROAD']);
+  const composedStreet = [streetNumber, streetName].filter(Boolean).join(' ').trim();
+
+  return {
+    id: firstValue(attrs, ['OBJECTID', 'ObjectId', 'FID', 'ID']),
+    name: firstValue(attrs, ['SHELTER', 'NAME', 'FACILITY', 'FACILITYNAME', 'SHELTER_NAME']) || 'Tornado Shelter',
+    address: firstValue(attrs, ['FULLADDR', 'ADDRESS', 'SITE_ADDRESS', 'LOCATION']) || composedStreet,
+    city: firstValue(attrs, ['CITY', 'MUNICIPALITY']) || 'Montgomery',
+    zip: firstValue(attrs, ['ZIP', 'ZIPCODE', 'POSTAL', 'POSTCODE']),
+    phone: firstValue(attrs, ['PHONE', 'TEL', 'CONTACT_PHONE', 'CONTACT']),
+    accessibility: firstValue(attrs, ['ACCESSIBILITY', 'ADA', 'ACCESSIBLE', 'TYPE']),
+    capacity: firstValue(attrs, ['CAPACITY', 'MAX_CAPACITY']),
+    notes: firstValue(attrs, ['NOTES', 'DESCRIPTION', 'DETAILS']),
+    lat: geom.y ?? attrs.LAT ?? attrs.LATITUDE ?? null,
+    lon: geom.x ?? attrs.LON ?? attrs.LONGITUDE ?? attrs.LNG ?? null
+  };
+}
+
+function scoreShelter(shelter, context = {}) {
+  let score = 0;
+
+  if (shelter.name) score += 20;
+  if (shelter.address) score += 20;
+  if (shelter.phone) score += 10;
+  if (shelter.accessibility) score += 12;
+  if (shelter.capacity) score += 8;
+  if (shelter.notes) score += 4;
+  if (shelter.lat != null && shelter.lon != null) score += 8;
+
+  if (context.zip && shelter.zip && String(context.zip) === String(shelter.zip)) {
+    score += 25;
+  }
+
+  return score;
+}
+
+function rankShelters(rows = [], context = {}) {
+  return safeArray(rows)
+    .map(normalizeShelterFeature)
+    .map((shelter) => ({
+      ...shelter,
+      score: scoreShelter(shelter, context)
+    }))
+    .sort((a, b) => b.score - a.score);
+}
+
+function buildShelterSteps() {
+  return [
+    'Move to a safe indoor location immediately if severe weather is nearby.',
+    'Review the recommended shelter below and call ahead if possible.',
+    'Bring medications, ID, water, and your phone charger if time allows.'
+  ];
+}
+
+function enrichResultWithShelter(result, shelterPack, query) {
+  const safeResult = result || fallbackRoute(query);
+
+  if (!shelterPack?.primary) {
+    return {
+      ...safeResult,
+      shelterRecommendation: null
+    };
+  }
+
+  return {
+    ...safeResult,
+    category: /information/i.test(safeResult.category || '')
+      ? safeResult.category
+      : 'Emergency Shelter Information',
+    categoryKey: 'ema',
+    contactDept: safeResult.contactDept || 'Emergency Management Agency',
+    contactPhone: safeResult.contactPhone || '(334) 625-2800',
+    contactExtra: shelterPack.primary.address
+      ? `Recommended shelter address: ${shelterPack.primary.address}`
+      : safeResult.contactExtra,
+    safetyLevel: safeResult.safetyLevel === 'red' ? 'red' : 'yellow',
+    safetyNote: safeResult.safetyNote || 'Weather-related resources are available nearby.',
+    steps: buildShelterSteps(),
+    shelterRecommendation: {
+      primary: shelterPack.primary,
+      alternatives: shelterPack.alternatives || []
+    }
+  };
+}
+
+async function resolveShelterRecommendation(query, zip = '') {
+  const shelterIntent = detectShelterNeed(query);
+
+  if (!shelterIntent.needsShelter) {
+    return null;
+  }
+
+  const ranked = rankShelters(cityData.shelters, { zip });
+  const primary = ranked[0] || null;
+  const alternatives = ranked.slice(1, 3);
+
+  return {
+    primary,
+    alternatives
+  };
+}
+
 async function loadCityData() {
   const find = (key) => SOURCES.find((s) => s.key === key)?.url;
   let usedDemo = false;
@@ -339,13 +477,15 @@ async function handleSubmit() {
     const result = await askConcierge(query, zip, cityData, localContext);
     console.log('[Submit] Concierge result:', result);
 
-    currentResult = result || fallbackRoute(query);
-    console.log('[Submit] Rendering result:', currentResult);
+    const shelterPack = await resolveShelterRecommendation(query, zip);
+    currentResult = enrichResultWithShelter(result || fallbackRoute(query), shelterPack, query);
 
+    console.log('[Submit] Rendering result:', currentResult);
     renderResult(currentResult);
   } catch (err) {
     console.error('[Submit] Error:', err);
-    currentResult = fallbackRoute(query);
+    const shelterPack = await resolveShelterRecommendation(query, zip);
+    currentResult = enrichResultWithShelter(fallbackRoute(query), shelterPack, query);
     renderResult(currentResult);
   } finally {
     hideLoading();
