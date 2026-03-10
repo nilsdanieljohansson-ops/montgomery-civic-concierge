@@ -48,7 +48,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Utility */
 [hidden] {
   display: none !important;
 }
@@ -74,7 +73,6 @@ body {
   text-align: center;
 }
 
-/* Focus states */
 button:focus-visible,
 a:focus-visible,
 input:focus-visible {
@@ -263,7 +261,6 @@ input:focus-visible {
   color: var(--navy);
 }
 
-/* Search bar */
 .search-bar {
   margin-top: 1.25rem;
   display: flex;
@@ -350,7 +347,6 @@ input:focus-visible {
   cursor: not-allowed;
 }
 
-/* Quick tags */
 .qtags {
   display: flex;
   gap: 6px;
@@ -441,7 +437,6 @@ input:focus-visible {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Issue card */
 .r-card {
   background: var(--white);
   border-radius: var(--r-lg);
@@ -491,7 +486,6 @@ input:focus-visible {
   white-space: nowrap;
 }
 
-/* Steps */
 .r-steps-header {
   padding: 1rem 1.5rem 0;
   font-size: 14px;
@@ -586,11 +580,20 @@ input:focus-visible {
   }
 }
 
-/* Contact row */
 .r-contact {
   padding: .75rem 1.5rem 1.25rem;
   font-size: 13px;
   color: var(--text2);
+}
+
+.r-contact-main {
+  line-height: 1.5;
+}
+
+.r-contact-extra {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text3);
 }
 
 .r-contact a {
@@ -603,7 +606,6 @@ input:focus-visible {
   text-decoration: underline;
 }
 
-/* Report card */
 .rpt-card {
   background: var(--white);
   border-radius: var(--r-lg);
@@ -651,6 +653,11 @@ input:focus-visible {
   background: var(--bg);
 }
 
+.rpt-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
 .rpt-submit {
   display: flex;
   align-items: center;
@@ -672,7 +679,14 @@ input:focus-visible {
   background: var(--teal-hover);
 }
 
-/* Concierge note */
+.rpt-submit-secondary {
+  background: var(--navy);
+}
+
+.rpt-submit-secondary:hover {
+  background: var(--navy-dark);
+}
+
 .cn-card {
   background: var(--white);
   border-radius: var(--r);
@@ -702,7 +716,6 @@ input:focus-visible {
   line-height: 1.5;
 }
 
-/* Source row */
 .src-row {
   display: flex;
   gap: 6px;
@@ -719,7 +732,6 @@ input:focus-visible {
   font-weight: 500;
 }
 
-/* Safety detail */
 .sfx {
   display: none;
   margin-top: .5rem;
@@ -759,7 +771,6 @@ input:focus-visible {
   gap: 1rem;
 }
 
-/* Safety badge card */
 .sb-card {
   appearance: none;
   -webkit-appearance: none;
@@ -825,7 +836,6 @@ input:focus-visible {
   color: white;
 }
 
-/* Badge panel */
 .badge-panel {
   display: none;
   background: var(--white);
@@ -847,7 +857,6 @@ input:focus-visible {
   color: var(--text3);
 }
 
-/* Sidebar box */
 .side-box {
   background: var(--white);
   border-radius: var(--r);
@@ -892,7 +901,33 @@ input:focus-visible {
   line-height: 1.5;
 }
 
-/* Pulse items */
+.city-score-wrap {
+  padding: 1rem 1rem 1.1rem;
+  text-align: center;
+}
+
+.city-score-value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  color: var(--navy);
+  line-height: 1;
+}
+
+.city-score-label {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text2);
+  font-weight: 600;
+}
+
+.city-score-meta {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text3);
+  line-height: 1.5;
+}
+
 .pulse-stack {
   display: flex;
   flex-direction: column;
@@ -966,7 +1001,6 @@ input:focus-visible {
 .pdot-blue { background: var(--blue); }
 .pdot-green { background: var(--green); }
 
-/* Emergency */
 .emg-list {
   padding: .75rem 1rem;
   display: flex;
@@ -1019,7 +1053,6 @@ input:focus-visible {
   border-color: var(--navy);
 }
 
-/* Bright Data */
 .bd-box {
   border: 1px solid var(--border);
 }
@@ -1279,6 +1312,10 @@ input:focus-visible {
     width: 100%;
     justify-content: center;
     border-radius: 0;
+  }
+
+  .rpt-actions {
+    grid-template-columns: 1fr;
   }
 
   .hero h1 {
