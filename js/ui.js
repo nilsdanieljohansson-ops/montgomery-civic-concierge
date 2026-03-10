@@ -90,7 +90,7 @@ function renderShelterRecommendation(result = {}) {
     : '';
 
   container.innerHTML = `
-    <div class="shelter-card">
+    <div class="shelter-card" id="shelterCard">
       <div class="shelter-kicker">Safe Shelter Option</div>
       <div class="shelter-name">${esc(primary.name || 'Tornado Shelter')}</div>
 
@@ -216,11 +216,22 @@ export function renderResult(result) {
     const stepLabels = getStepLabels(safeResult);
     const callPhone = safeResult.contactPhone || '311';
 
-    const stepBtns = [
-      `<button type="button" class="step-btn step-btn-primary" onclick="generateReport()">Start Report</button>`,
-      `<button type="button" class="step-btn" onclick="trackStatus()">Track Existing</button>`,
-      `<a class="step-btn" href="tel:${esc(callPhone)}">Call Now</a>`
-    ];
+    const isShelterFlow =
+      /shelter|storm|weather|ema|emergency/.test(
+        `${safeResult.categoryKey || ''} ${safeResult.category || ''}`.toLowerCase()
+      );
+
+    const stepBtns = isShelterFlow
+      ? [
+          `<a class="step-btn step-btn-primary" href="#shelterCard">View Shelter</a>`,
+          `<button type="button" class="step-btn" onclick="toggleSafetyDetail()">View Alerts</button>`,
+          `<a class="step-btn" href="tel:${esc(callPhone)}">Call Now</a>`
+        ]
+      : [
+          `<button type="button" class="step-btn step-btn-primary" onclick="generateReport()">Start Report</button>`,
+          `<button type="button" class="step-btn" onclick="trackStatus()">Track Existing</button>`,
+          `<a class="step-btn" href="tel:${esc(callPhone)}">Call Now</a>`
+        ];
 
     if ($('rSteps')) {
       $('rSteps').innerHTML = steps.map((s, i) => `
