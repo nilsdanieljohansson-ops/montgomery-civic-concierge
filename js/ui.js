@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════
 // UI — DOM rendering & interaction handlers
-// Complete version synced with current HTML
+// Synced with updated HTML/CSS structure
 // ════════════════════════════════════════════
 
 import { SERVICES } from './sources.js';
@@ -24,23 +24,33 @@ function nl2br(str = '') {
   return esc(str).replace(/\n/g, '<br>');
 }
 
+function setHidden(id, hidden) {
+  const el = $(id);
+  if (el) el.hidden = hidden;
+}
+
 // ────────────────────────────
 // PULSE CARDS (sidebar)
 // ────────────────────────────
-export function updatePulseCards(cityData) {
+export function updatePulseCards(cityData = {}) {
   const ts = timeStamp();
 
-  if ($('p1')) $('p1').textContent = `${cityData.shelters.length} tornado shelters and ${cityData.sirens.length} weather sirens mapped`;
+  const shelters = Array.isArray(cityData.shelters) ? cityData.shelters.length : 0;
+  const sirens = Array.isArray(cityData.sirens) ? cityData.sirens.length : 0;
+  const calls = Array.isArray(cityData.calls911) ? cityData.calls911.length : 0;
+  const paving = Array.isArray(cityData.paving) ? cityData.paving.length : 0;
+  const requests311 = Array.isArray(cityData.requests311) ? cityData.requests311.length : 0;
+
+  if ($('p1')) $('p1').textContent = `${shelters} tornado shelters and ${sirens} weather sirens mapped`;
   if ($('p1t')) $('p1t').textContent = ts;
 
-  const calls = cityData.calls911.length;
   if ($('p2')) $('p2').textContent = calls > 0 ? `${calls}+ recent 911 call records` : 'Connected to 911 dataset';
   if ($('p2t')) $('p2t').textContent = ts;
 
-  if ($('p3')) $('p3').textContent = cityData.paving.length > 0 ? `${cityData.paving.length} paving projects active` : 'Connected to infrastructure data';
+  if ($('p3')) $('p3').textContent = paving > 0 ? `${paving} paving projects active` : 'Connected to infrastructure data';
   if ($('p3t')) $('p3t').textContent = ts;
 
-  if ($('p4')) $('p4').textContent = cityData.requests311.length > 0 ? `${cityData.requests311.length}+ recent service requests` : 'Connected to 311 data';
+  if ($('p4')) $('p4').textContent = requests311 > 0 ? `${requests311}+ recent service requests` : 'Connected to 311 data';
   if ($('p4t')) $('p4t').textContent = ts;
 }
 
@@ -95,14 +105,21 @@ export function renderResult(result) {
     }
 
     // Steps
-    const steps = Array.isArray(safeResult.steps) ? safeResult.steps.slice(0, 3) : [];
+    const incomingSteps = Array.isArray(safeResult.steps) ? safeResult.steps.slice(0, 3) : [];
+    const fallbackSteps = [
+      'Start a report with the issue details and location.',
+      'Track the case or follow up with the responsible department.',
+      'Use the listed contact info if you need faster help.'
+    ];
+    const steps = incomingSteps.length ? incomingSteps : fallbackSteps;
+
     const stepColors = ['step-num-1', 'step-num-2', 'step-num-3'];
     const stepLabels = ['Report Issue', 'Track Status', 'Contact Info'];
     const callPhone = safeResult.contactPhone || '311';
 
     const stepBtns = [
-      `<button class="step-btn step-btn-primary" onclick="generateReport()">Start Report</button>`,
-      `<button class="step-btn" type="button">Track Existing</button>`,
+      `<button type="button" class="step-btn step-btn-primary" onclick="generateReport()">Start Report</button>`,
+      `<button type="button" class="step-btn">Track Existing</button>`,
       `<a class="step-btn" href="tel:${esc(callPhone)}">Call Now</a>`
     ];
 
@@ -125,11 +142,11 @@ export function renderResult(result) {
     if ($('rContact')) {
       $('rContact').innerHTML = `
         <div class="r-contact-main">
-          📞 <strong>${esc(dept)}</strong> · 
+          📞 <strong>${esc(dept)}</strong> ·
           <a href="tel:${esc(phone)}">${esc(phone)}</a>
           ${svc.emergency ? ` · Emergency: <a href="tel:${esc(svc.emergency)}">${esc(svc.emergency)}</a>` : ''}
         </div>
-        <div class="r-contact-extra">${esc(extra)}</div>
+        ${extra ? `<div class="r-contact-extra">${esc(extra)}</div>` : ''}
       `;
     }
 
@@ -140,13 +157,13 @@ export function renderResult(result) {
         <div style="margin-top:10px;">${nl2br(safeResult.reportBody || '')}</div>
       `;
     }
-    if ($('reportCard')) $('reportCard').style.display = 'block';
+    setHidden('reportCard', false);
 
     // Concierge note
     if ($('rNote')) {
       $('rNote').textContent = safeResult.conciergeNote || 'Hope this helps — have a good day!';
     }
-    if ($('conciergeCard')) $('conciergeCard').style.display = 'flex';
+    setHidden('conciergeCard', false);
 
     // Source chips
     const sources = Array.isArray(safeResult.sources) && safeResult.sources.length
@@ -155,8 +172,8 @@ export function renderResult(result) {
 
     if ($('rChips')) {
       $('rChips').innerHTML = sources.map((s) => `<span class="src-chip">${esc(s)}</span>`).join('');
-      $('rChips').style.display = 'flex';
     }
+    setHidden('rChips', false);
 
     console.log('[UI] Main content rendered');
 
@@ -188,6 +205,10 @@ export function showLoading() {
   if ($('resultArea')) $('resultArea').classList.remove('on');
   if ($('loader')) $('loader').classList.add('on');
   if ($('sendBtn')) $('sendBtn').disabled = true;
+
+  setHidden('reportCard', true);
+  setHidden('conciergeCard', true);
+  setHidden('rChips', true);
 }
 
 export function hideLoading() {
