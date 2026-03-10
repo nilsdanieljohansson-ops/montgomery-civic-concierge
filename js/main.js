@@ -1,13 +1,19 @@
 // ════════════════════════════════════════════
 // MAIN — Application entry point
-// Complete version with local civic context injection
+// Synced with updated HTML/CSS/UI structure
 // ════════════════════════════════════════════
 
 import { SOURCES } from './sources.js';
 import { CONFIG } from './config.js';
 import { arcQuery } from './arcgis.js';
 import { askConcierge, fallbackRoute } from './concierge.js';
-import { updatePulseCards, updateBrightDataCards, renderResult, showLoading, hideLoading } from './ui.js';
+import {
+  updatePulseCards,
+  updateBrightDataCards,
+  renderResult,
+  showLoading,
+  hideLoading
+} from './ui.js';
 import { toggleTester, runTests } from './tester.js';
 import { loadBrightData, getLastCrawlTime, isConfigured } from './brightdata.js';
 
@@ -25,7 +31,7 @@ const cityData = {
   sirens: [],
   calls911: [],
   requests311: [],
-  paving: [],
+  paving: []
 };
 
 // ────────────────────────────
@@ -49,14 +55,28 @@ function pickFields(items = [], fields = [], limit = 3) {
     .map((item) => {
       const a = firstAttr(item);
       const obj = {};
+
       fields.forEach((field) => {
         if (a[field] !== undefined && a[field] !== null && String(a[field]).trim() !== '') {
           obj[field] = String(a[field]).trim();
         }
       });
+
       return obj;
     })
     .filter((obj) => Object.keys(obj).length > 0);
+}
+
+function setHidden(id, hidden) {
+  const el = safeEl(id);
+  if (el) el.hidden = hidden;
+}
+
+function buildPlainReportText(result) {
+  const r = result || {};
+  const subject = r.reportSubject || 'City Service Request';
+  const body = r.reportBody || '';
+  return `Subject: ${subject}\n\n${body}`.trim();
 }
 
 function buildLocalContext(query, zip, cityData) {
@@ -72,7 +92,9 @@ function buildLocalContext(query, zip, cityData) {
   lines.push('Local Montgomery civic data context is available.');
   if (zip) lines.push(`Resident ZIP code provided: ${zip}.`);
 
-  lines.push(`Loaded dataset counts: shelters=${shelters.length}, sirens=${sirens.length}, calls911=${calls911.length}, requests311=${requests311.length}, paving=${paving.length}.`);
+  lines.push(
+    `Loaded dataset counts: shelters=${shelters.length}, sirens=${sirens.length}, calls911=${calls911.length}, requests311=${requests311.length}, paving=${paving.length}.`
+  );
 
   const isShelter = /tornado|storm|shelter|ema|emergency management|weather/i.test(q);
   const isRoad = /pothole|road|street|sidewalk|drain|drainage|paving|infrastructure|streetlight|traffic signal/i.test(q);
@@ -81,7 +103,11 @@ function buildLocalContext(query, zip, cityData) {
   const isEmergency = /fire in my building|building on fire|active fire|medical emergency|call 911|crime in progress/i.test(q);
 
   if (isShelter) {
-    const shelterSamples = pickFields(shelters, ['SHELTER', 'ST_NUMBER', 'ST_NAME', 'TYPE', 'FULLADDR', 'ADDRESS'], 3);
+    const shelterSamples = pickFields(
+      shelters,
+      ['SHELTER', 'ST_NUMBER', 'ST_NAME', 'TYPE', 'FULLADDR', 'ADDRESS'],
+      3
+    );
     const sirenSamples = pickFields(sirens, ['NAME', 'LOCATION', 'ADDRESS', 'TYPE'], 3);
 
     lines.push(`Tornado shelter records available: ${shelters.length}.`);
@@ -94,12 +120,18 @@ function buildLocalContext(query, zip, cityData) {
       lines.push(`Sample siren records: ${JSON.stringify(sirenSamples)}.`);
     }
 
-    lines.push('Use this context to make shelter guidance feel local, but do not claim an exact nearest location unless the context explicitly supports it.');
+    lines.push(
+      'Use this context to make shelter guidance feel local, but do not claim an exact nearest location unless the context explicitly supports it.'
+    );
   }
 
   if (isRoad) {
     const pavingSamples = pickFields(paving, ['FULLNAME', 'StreetName', 'DistrictDesc', 'From_'], 3);
-    const requestSamples = pickFields(requests311, ['Request_Type', 'Department', 'Address', 'Create_Date'], 3);
+    const requestSamples = pickFields(
+      requests311,
+      ['Request_Type', 'Department', 'Address', 'Create_Date'],
+      3
+    );
 
     lines.push(`Paving project records available: ${paving.length}.`);
     if (pavingSamples.length) {
@@ -111,11 +143,17 @@ function buildLocalContext(query, zip, cityData) {
       lines.push(`Sample 311 request records: ${JSON.stringify(requestSamples)}.`);
     }
 
-    lines.push('Use this context to improve routing for roads, street maintenance, drainage, streetlights, or infrastructure-related issues.');
+    lines.push(
+      'Use this context to improve routing for roads, street maintenance, drainage, streetlights, or infrastructure-related issues.'
+    );
   }
 
   if (isTrash) {
-    const requestSamples = pickFields(requests311, ['Request_Type', 'Department', 'Address', 'Create_Date'], 3);
+    const requestSamples = pickFields(
+      requests311,
+      ['Request_Type', 'Department', 'Address', 'Create_Date'],
+      3
+    );
 
     lines.push(`311 sanitation-related routing may be supported by ${requests311.length} recent request records.`);
     if (requestSamples.length) {
@@ -131,7 +169,9 @@ function buildLocalContext(query, zip, cityData) {
       lines.push(`Sample 911 call records: ${JSON.stringify(callSamples)}.`);
     }
 
-    lines.push('If the request is only asking for a station location or department information, treat it as informational, not an active emergency.');
+    lines.push(
+      'If the request is only asking for a station location or department information, treat it as informational, not an active emergency.'
+    );
   }
 
   if (isEmergency) {
@@ -162,7 +202,9 @@ function buildLocalContext(query, zip, cityData) {
     }
   }
 
-  lines.push('Use local context only to improve relevance, phrasing, and routing. Do not invent exact locations, availability, or official details unless explicitly supported.');
+  lines.push(
+    'Use local context only to improve relevance, phrasing, and routing. Do not invent exact locations, availability, or official details unless explicitly supported.'
+  );
 
   return lines.join('\n');
 }
@@ -183,7 +225,7 @@ async function loadCityData() {
       arcQuery(find('weather_sirens'), { resultRecordCount: '200' }),
       arcQuery(find('calls_911'), { resultRecordCount: '20' }),
       arcQuery(find('received_311'), { resultRecordCount: '20' }),
-      arcQuery(find('paving'), { resultRecordCount: '20' }),
+      arcQuery(find('paving'), { resultRecordCount: '20' })
     ]);
 
     cityData.shelters = sh.status === 'fulfilled' ? safeArray(sh.value) : [];
@@ -228,7 +270,7 @@ async function loadCityData() {
     sirens: cityData.sirens.length,
     calls911: cityData.calls911.length,
     requests311: cityData.requests311.length,
-    paving: cityData.paving.length,
+    paving: cityData.paving.length
   });
 }
 
@@ -278,12 +320,12 @@ async function handleSubmit() {
     console.log('[Submit] Local context:', localContext);
 
     const result = await askConcierge(query, zip, cityData, localContext);
-console.log('[Submit] Concierge result:', result);
+    console.log('[Submit] Concierge result:', result);
 
-currentResult = result || fallbackRoute(query);
-console.log('[Submit] Rendering result:', currentResult);
+    currentResult = result || fallbackRoute(query);
+    console.log('[Submit] Rendering result:', currentResult);
 
-renderResult(currentResult);
+    renderResult(currentResult);
   } catch (err) {
     console.error('[Submit] Error:', err);
     currentResult = fallbackRoute(query);
@@ -300,22 +342,20 @@ renderResult(currentResult);
 function generateReport() {
   if (!currentResult) return;
 
-  const reportText = `Subject: ${currentResult.reportSubject}\n\n${currentResult.reportBody}`;
-  const rptText = safeEl('rptText');
-  const reportCard = safeEl('reportCard');
-
-  if (rptText) rptText.textContent = reportText;
-  if (reportCard) reportCard.style.display = 'block';
-}
-
-function copyReport() {
   const rptText = safeEl('rptText');
   if (!rptText) return;
 
-  const text = rptText.textContent || '';
+  rptText.textContent = buildPlainReportText(currentResult);
+  setHidden('reportCard', false);
+}
+
+async function copyReport() {
+  const text = buildPlainReportText(currentResult);
   if (!text.trim()) return;
 
-  navigator.clipboard.writeText(text).then(() => {
+  try {
+    await navigator.clipboard.writeText(text);
+
     const btn = safeEl('copyBtn');
     if (!btn) return;
 
@@ -324,9 +364,9 @@ function copyReport() {
     setTimeout(() => {
       btn.innerHTML = original;
     }, 1800);
-  }).catch((err) => {
+  } catch (err) {
     console.error('[Copy] Clipboard failed:', err);
-  });
+  }
 }
 
 // ────────────────────────────
@@ -397,4 +437,3 @@ window.toggleTester = toggleTester;
 window.runTests = runTests;
 
 init();
-
