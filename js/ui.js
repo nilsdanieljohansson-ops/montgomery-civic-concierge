@@ -32,7 +32,6 @@ function setHidden(id, hidden) {
 function getStepLabels(result = {}) {
   const key = String(result.categoryKey || '').toLowerCase();
   const cat = String(result.category || '').toLowerCase();
-
   const hay = `${key} ${cat}`;
 
   if (/shelter|storm|weather|ema|emergency/.test(hay)) {
@@ -58,9 +57,6 @@ function getStepLabels(result = {}) {
   return ['Report Issue', 'Track Status', 'Contact Info'];
 }
 
-// ────────────────────────────
-// PULSE CARDS (sidebar)
-// ────────────────────────────
 export function updatePulseCards(cityData = {}) {
   const ts = timeStamp();
 
@@ -83,9 +79,11 @@ export function updatePulseCards(cityData = {}) {
   if ($('p4t')) $('p4t').textContent = ts;
 }
 
-// ────────────────────────────
-// RESULT RENDERING
-// ────────────────────────────
+export function updateCityHealthScore(score = 92, meta = 'Based on city service signals and safety context') {
+  if ($('cityHealthScore')) $('cityHealthScore').textContent = String(score);
+  if ($('cityHealthMeta')) $('cityHealthMeta').textContent = meta;
+}
+
 export function renderResult(result) {
   const safeResult = result || {};
   console.log('[UI] Rendering result:', safeResult);
@@ -102,14 +100,10 @@ export function renderResult(result) {
         emergency: ''
       };
 
-    // Issue header
     if ($('rIcon')) $('rIcon').textContent = svc.icon || '🏛️';
     if ($('rCat')) $('rCat').textContent = safeResult.category || svc.cat || 'City Services';
     if ($('rTag')) $('rTag').textContent = svc.cat !== (safeResult.category || '') ? svc.cat : 'City Service';
 
-    console.log('[UI] Header rendered');
-
-    // Safety badge
     const level = safeResult.safetyLevel || 'green';
     const labels = {
       green: 'All Clear',
@@ -133,7 +127,6 @@ export function renderResult(result) {
       else card.style.background = '#0B3C5D';
     }
 
-    // Steps
     const incomingSteps = Array.isArray(safeResult.steps) ? safeResult.steps.slice(0, 3) : [];
     const fallbackSteps = [
       'Start a report with the issue details and location.',
@@ -163,7 +156,6 @@ export function renderResult(result) {
       `).join('');
     }
 
-    // Contact
     const dept = safeResult.contactDept || 'City of Montgomery';
     const phone = safeResult.contactPhone || '311';
     const extra = safeResult.contactExtra || '';
@@ -179,7 +171,6 @@ export function renderResult(result) {
       `;
     }
 
-    // Report panel content only — do not auto-open
     if ($('rptText')) {
       $('rptText').innerHTML = `
         <div><strong>Subject:</strong> ${esc(safeResult.reportSubject || 'City Service Request')}</div>
@@ -187,13 +178,11 @@ export function renderResult(result) {
       `;
     }
 
-    // Concierge note
     if ($('rNote')) {
       $('rNote').textContent = safeResult.conciergeNote || 'Hope this helps — have a good day!';
     }
     setHidden('conciergeCard', false);
 
-    // Source chips
     const sources = Array.isArray(safeResult.sources) && safeResult.sources.length
       ? safeResult.sources
       : ['City of Montgomery Open Data'];
@@ -203,32 +192,21 @@ export function renderResult(result) {
     }
     setHidden('rChips', false);
 
-    console.log('[UI] Main content rendered');
-
-    // Safety detail panel
     if ($('sfx')) {
       $('sfx').classList.add('on');
     }
 
-    // Show result area
     if ($('resultArea')) {
       $('resultArea').classList.add('on');
       $('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     console.log('[UI] renderResult completed');
-    console.log('[UI] resultArea class:', $('resultArea')?.className);
-    console.log('[UI] resultArea display:', $('resultArea') ? window.getComputedStyle($('resultArea')).display : '(missing)');
-    console.log('[UI] resultArea visibility:', $('resultArea') ? window.getComputedStyle($('resultArea')).visibility : '(missing)');
-    console.log('[UI] resultArea opacity:', $('resultArea') ? window.getComputedStyle($('resultArea')).opacity : '(missing)');
   } catch (err) {
     console.error('[UI] renderResult crashed:', err);
   }
 }
 
-// ────────────────────────────
-// LOADING
-// ────────────────────────────
 export function showLoading() {
   if ($('resultArea')) $('resultArea').classList.remove('on');
   if ($('loader')) $('loader').classList.add('on');
@@ -244,9 +222,6 @@ export function hideLoading() {
   if ($('sendBtn')) $('sendBtn').disabled = false;
 }
 
-// ────────────────────────────
-// BRIGHT DATA CARDS
-// ────────────────────────────
 const BD_ICONS = {
   announcements: '📢',
   safety: '🔴',
