@@ -10,6 +10,7 @@ import { askConcierge, fallbackRoute } from './concierge.js';
 import {
   updatePulseCards,
   updateBrightDataCards,
+  updateCityHealthScore,
   renderResult,
   showLoading,
   hideLoading
@@ -19,9 +20,6 @@ import { loadBrightData, getLastCrawlTime, isConfigured } from './brightdata.js'
 
 const $ = (id) => document.getElementById(id);
 
-// ────────────────────────────
-// STATE
-// ────────────────────────────
 let currentResult = null;
 let brightDataContent = [];
 let isSubmitting = false;
@@ -34,9 +32,6 @@ const cityData = {
   paving: []
 };
 
-// ────────────────────────────
-// HELPERS
-// ────────────────────────────
 function safeEl(id) {
   return $(id);
 }
@@ -83,6 +78,38 @@ function normalizePhone(phone = '') {
   return String(phone).replace(/[^\d+]/g, '');
 }
 
+function buildMailtoLink(result) {
+  const r = result || {};
+  const subject = encodeURIComponent(r.reportSubject || 'City Service Request');
+  const body = encodeURIComponent(r.reportBody || '');
+  return `mailto:?subject=${subject}&body=${body}`;
+}
+
+function calculateCityHealthScore(data) {
+  const calls = safeArray(data.calls911).length;
+  const requests = safeArray(data.requests311).length;
+  const paving = safeArray(data.paving).length;
+  const sirens = safeArray(data.sirens).length;
+  const shelters = safeArray(data.shelters).length;
+
+  let score = 100;
+  score -= Math.min(18, calls * 0.6);
+  score -= Math.min(10, requests * 0.25);
+  score += Math.min(6, paving * 0.15);
+  score += Math.min(4, sirens * 0.03);
+  score += Math.min(4, shelters * 0.03);
+
+  return Math.max(60, Math.min(99, Math.round(score)));
+}
+
+function updateHealthPanel() {
+  const score = calculateCityHealthScore(cityData);
+  updateCityHealthScore(
+    score,
+    `Based on ${cityData.calls911.length} recent 911 records, ${cityData.requests311.length} service requests, and ${cityData.paving.length} infrastructure projects.`
+  );
+}
+
 function buildLocalContext(query, zip, cityData) {
   const q = String(query || '').toLowerCase();
   const lines = [];
@@ -124,9 +151,7 @@ function buildLocalContext(query, zip, cityData) {
       lines.push(`Sample siren records: ${JSON.stringify(sirenSamples)}.`);
     }
 
-    lines.push(
-      'Use this context to make shelter guidance feel local, but do not claim an exact nearest location unless the context explicitly supports it.'
-    );
+    lines.push('Use this context to make shelter guidance feel local, but do not claim an exact nearest location unless the context explicitly supports it.');
   }
 
   if (isRoad) {
@@ -147,9 +172,7 @@ function buildLocalContext(query, zip, cityData) {
       lines.push(`Sample 311 request records: ${JSON.stringify(requestSamples)}.`);
     }
 
-    lines.push(
-      'Use this context to improve routing for roads, street maintenance, drainage, streetlights, or infrastructure-related issues.'
-    );
+    lines.push('Use this context to improve routing for roads, street maintenance, drainage, streetlights, or infrastructure-related issues.');
   }
 
   if (isTrash) {
@@ -173,9 +196,7 @@ function buildLocalContext(query, zip, cityData) {
       lines.push(`Sample 911 call records: ${JSON.stringify(callSamples)}.`);
     }
 
-    lines.push(
-      'If the request is only asking for a station location or department information, treat it as informational, not an active emergency.'
-    );
+    lines.push('If the request is only asking for a station location or department information, treat it as informational, not an active emergency.');
   }
 
   if (isEmergency) {
@@ -206,16 +227,10 @@ function buildLocalContext(query, zip, cityData) {
     }
   }
 
-  lines.push(
-    'Use local context only to improve relevance, phrasing, and routing. Do not invent exact locations, availability, or official details unless explicitly supported.'
-  );
-
+  lines.push('Use local context only to improve relevance, phrasing, and routing. Do not invent exact locations, availability, or official details unless explicitly supported.');
   return lines.join('\n');
 }
 
-// ────────────────────────────
-// LOAD CITY DATA ON STARTUP
-// ────────────────────────────
 async function loadCityData() {
   const find = (key) => SOURCES.find((s) => s.key === key)?.url;
   let usedDemo = false;
@@ -256,6 +271,7 @@ async function loadCityData() {
   if (dsCount) dsCount.textContent = String(SOURCES.length);
 
   updatePulseCards(cityData);
+  updateHealthPanel();
 
   try {
     const bright = await loadBrightData();
@@ -302,9 +318,6 @@ async function loadDemoPulse() {
   }
 }
 
-// ────────────────────────────
-// SUBMIT HANDLER
-// ────────────────────────────
 async function handleSubmit() {
   if (isSubmitting) return;
 
@@ -340,9 +353,6 @@ async function handleSubmit() {
   }
 }
 
-// ────────────────────────────
-// REPORT / TRACK HELPERS
-// ────────────────────────────
 function generateReport() {
   const card = safeEl('reportCard');
   if (!card) return;
@@ -398,9 +408,11 @@ async function copyReport() {
   }
 }
 
-// ────────────────────────────
-// QUICK EXAMPLE BUTTONS
-// ────────────────────────────
+function openReportEmail() {
+  if (!currentResult) return;
+  window.location.href = buildMailtoLink(currentResult);
+}
+
 function setQuery(text) {
   const input = safeEl('queryInput');
   if (!input) return;
@@ -409,9 +421,6 @@ function setQuery(text) {
   input.focus();
 }
 
-// ────────────────────────────
-// SAFETY / BADGE TOGGLES
-// ────────────────────────────
 function toggleBadgePanel() {
   const panel = safeEl('badgePanel');
   if (panel) panel.classList.toggle('open');
@@ -425,9 +434,6 @@ function toggleSafetyDetail() {
   if (panel) panel.classList.toggle('open');
 }
 
-// ────────────────────────────
-// KEYBOARD SHORTCUTS
-// ────────────────────────────
 function bindKeyboard() {
   safeEl('queryInput')?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -444,22 +450,17 @@ function bindKeyboard() {
   });
 }
 
-// ────────────────────────────
-// INIT
-// ────────────────────────────
 function init() {
   bindKeyboard();
   loadCityData();
   runTests();
 }
 
-// ────────────────────────────
-// EXPOSE TO HTML onclick handlers
-// ────────────────────────────
 window.handleSubmit = handleSubmit;
 window.generateReport = generateReport;
 window.trackStatus = trackStatus;
 window.copyReport = copyReport;
+window.openReportEmail = openReportEmail;
 window.setQuery = setQuery;
 window.toggleBadgePanel = toggleBadgePanel;
 window.toggleSafetyDetail = toggleSafetyDetail;
