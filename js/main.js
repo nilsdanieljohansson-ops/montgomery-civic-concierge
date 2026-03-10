@@ -54,6 +54,12 @@ function firstValue(obj = {}, keys = []) {
   return '';
 }
 
+function cleanAccessibility(value = '') {
+  const v = String(value).trim();
+  if (/genearl/i.test(v)) return 'GENERAL';
+  return v;
+}
+
 function pickFields(items = [], fields = [], limit = 3) {
   return safeArray(items)
     .slice(0, limit)
@@ -277,7 +283,9 @@ function normalizeShelterFeature(row = {}) {
     city: firstValue(attrs, ['CITY', 'MUNICIPALITY']) || 'Montgomery',
     zip: firstValue(attrs, ['ZIP', 'ZIPCODE', 'POSTAL', 'POSTCODE']),
     phone: firstValue(attrs, ['PHONE', 'TEL', 'CONTACT_PHONE', 'CONTACT']),
-    accessibility: firstValue(attrs, ['ACCESSIBILITY', 'ADA', 'ACCESSIBLE', 'TYPE']),
+    accessibility: cleanAccessibility(
+      firstValue(attrs, ['ACCESSIBILITY', 'ADA', 'ACCESSIBLE', 'TYPE'])
+    ),
     capacity: firstValue(attrs, ['CAPACITY', 'MAX_CAPACITY']),
     notes: firstValue(attrs, ['NOTES', 'DESCRIPTION', 'DETAILS']),
     lat: geom.y ?? attrs.LAT ?? attrs.LATITUDE ?? null,
