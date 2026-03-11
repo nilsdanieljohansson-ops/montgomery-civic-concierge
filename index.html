@@ -152,6 +152,21 @@
             <span>How do I report a code violation?</span>
           </div>
 
+          <div class="demo-strip" aria-label="Live demo highlights">
+            <div class="demo-pill">
+              <span class="demo-pill-k">Live city data</span>
+              <strong>Open datasets + civic signals</strong>
+            </div>
+            <div class="demo-pill">
+              <span class="demo-pill-k">Emergency aware</span>
+              <strong>Tornado shelter routing + safety cues</strong>
+            </div>
+            <div class="demo-pill">
+              <span class="demo-pill-k">Action ready</span>
+              <strong>Next steps + ready-to-send report</strong>
+            </div>
+          </div>
+
           <div class="qtags" aria-label="Quick question shortcuts">
             <button type="button" onclick="setQuery('My trash wasn\\'t picked up')">🗑️ Missed pickup</button>
             <button type="button" onclick="setQuery('I need a business license')">🏢 Business license</button>
@@ -185,6 +200,8 @@
           aria-atomic="true"
           aria-label="Concierge results"
         >
+          <div class="insight-banner" id="insightBanner" hidden></div>
+
           <article class="r-card">
             <div class="r-top">
               <div class="r-issue-row">
@@ -212,8 +229,8 @@
             </div>
 
             <div class="r-steps" id="rSteps"></div>
-<div class="r-shelter" id="rShelter" hidden></div>
-<div class="r-contact" id="rContact"></div>
+            <div class="r-shelter" id="rShelter" hidden></div>
+            <div class="r-contact" id="rContact"></div>
           </article>
 
           <article class="rpt-card" id="reportCard" hidden>
@@ -462,7 +479,7 @@
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                stroke-width="2"
+                stroke-width="2.5"
                 aria-hidden="true"
                 focusable="false"
               >
@@ -470,19 +487,15 @@
               </svg>
             </a>
 
-            <a
-              href="#"
-              class="emg-link"
-              onclick="setQuery('Where is the nearest tornado shelter?'); handleSubmit(); return false;"
-            >
-              🏠 Find Shelter
+            <a href="tel:311" class="emg-link">
+              ☎️ 311 / City Services
               <svg
                 width="14"
                 height="14"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                stroke-width="2"
+                stroke-width="2.5"
                 aria-hidden="true"
                 focusable="false"
               >
@@ -490,76 +503,40 @@
               </svg>
             </a>
 
-            <div class="emg-tags">
-              <a
-                href="https://opendata.montgomeryal.gov/"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="emg-tag"
+            <a href="https://ema.alabama.gov/" target="_blank" rel="noopener noreferrer" class="emg-link">
+              🌪️ Alabama EMA
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                aria-hidden="true"
+                focusable="false"
               >
-                🌊 Flood Zones
-              </a>
-              <a
-                href="https://opendata.montgomeryal.gov/"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="emg-tag"
-              >
-                🚒 Fire Stations
-              </a>
-            </div>
+                <path d="M5 12h14M12 5l7 7-7 7"></path>
+              </svg>
+            </a>
           </div>
         </section>
 
-        <section class="side-box bd-box" aria-labelledby="webIntelTitle">
-          <div class="bd-hd">
-            <div class="bd-brand" id="webIntelTitle">
-              <img
-                src="https://brightdata.com/favicon.ico"
-                width="14"
-                height="14"
-                alt=""
-                aria-hidden="true"
-              >
-              Web Intelligence
-            </div>
-            <span id="bdStatus" class="bd-demo">Demo</span>
+        <section class="side-box" aria-labelledby="brightDataTitle">
+          <div class="side-hd">
+            <div class="side-title" id="brightDataTitle">Public Web Intelligence</div>
+            <span class="side-live" id="bdStatus">Live</span>
           </div>
-
-          <div class="bd-intro">
-            Public web signals used to enrich city awareness and resident guidance.
+          <div class="side-sub">
+            Signals discovered from public web sources to complement city open data.
           </div>
-
-          <div id="brightDataCards" class="bd-cards" aria-live="polite">
-            <div class="bd-ph">Loading web data...</div>
-          </div>
-
-          <div class="bd-ft">
-            Powered by
-            <a href="https://brightdata.com" target="_blank" rel="noopener noreferrer">Bright Data</a>
-            · Public web data
+          <div class="pulse-stack bd-cards" id="brightDataCards">
+            <div class="bd-ph">Loading public web updates…</div>
           </div>
         </section>
       </aside>
     </div>
   </main>
 
-  <footer class="footer">
-    <span>Built for the World Wide Vibes Hackathon</span>
-    <span>City of Montgomery · AI Civic Concierge (Beta)</span>
-    <span>
-      Not an official emergency system ·
-      <a
-        href="https://opendata.montgomeryal.gov/"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Data sources
-      </a>
-    </span>
-  </footer>
-
   <script type="module" src="js/main.js"></script>
 </body>
 </html>
-
