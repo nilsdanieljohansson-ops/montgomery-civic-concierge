@@ -90,6 +90,10 @@ function buildPlainReportText(result) {
   return `Subject: ${subject}\n\n${body}`.trim();
 }
 
+function normalizePhone(phone = '') {
+  return String(phone).replace(/[^\d+]/g, '');
+}
+
 function buildMailtoLink(result) {
   const r = result || {};
   const subject = encodeURIComponent(r.reportSubject || 'City Service Request');
@@ -120,113 +124,6 @@ function updateHealthPanel() {
     score,
     `Based on ${cityData.calls911.length} recent 911 records, ${cityData.requests311.length} service requests, and ${cityData.paving.length} infrastructure projects.`
   );
-}
-
-function analyzeUrgency(query = '') {
-  const q = String(query || '').toLowerCase();
-
-  const red = [
-    /tornado/,
-    /shelter/,
-    /fire/,
-    /gun/,
-    /weapon/,
-    /shooting/,
-    /medical emergency/,
-    /crime in progress/,
-    /gas leak/,
-    /active emergency/
-  ];
-
-  const yellow = [
-    /dangerous/,
-    /unsafe/,
-    /fallen tree/,
-    /tree.*fall/,
-    /flood/,
-    /storm/,
-    /power line/,
-    /traffic signal/,
-    /streetlight/,
-    /road closure/
-  ];
-
-  if (red.some((rx) => rx.test(q))) {
-    return {
-      level: 'red',
-      label: 'Immediate attention',
-      note: 'Potential safety-sensitive request detected. Use official emergency services for urgent danger.'
-    };
-  }
-
-  if (yellow.some((rx) => rx.test(q))) {
-    return {
-      level: 'yellow',
-      label: 'Safety advisory',
-      note: 'Potential public-safety issue detected. Review the guidance below and escalate if conditions worsen.'
-    };
-  }
-
-  return {
-    level: 'green',
-    label: 'Routine civic request',
-    note: 'No high-risk language detected from the request.'
-  };
-}
-
-function buildCivicInsight(query, zip, data, result = {}) {
-  const urgency = analyzeUrgency(query);
-  const isShelter = /tornado|storm|shelter|ema|emergency/i.test(String(query || ''));
-  const primaryShelter = result?.shelterRecommendation?.primary;
-  const alternatives = Array.isArray(result?.shelterRecommendation?.alternatives)
-    ? result.shelterRecommendation.alternatives.length
-    : 0;
-
-  let localDataText = `${safeArray(data.requests311).length} recent 311 requests • ${safeArray(data.paving).length} paving projects`;
-  if (isShelter) {
-    localDataText = `${safeArray(data.shelters).length} shelters mapped • ${safeArray(data.sirens).length} weather sirens connected`;
-  }
-
-  let routeText = result?.contactDept || result?.category || 'City service routing ready';
-  if (primaryShelter) {
-    routeText = `${primaryShelter.name || 'Shelter match ready'}${alternatives ? ` • ${alternatives} alternate option${alternatives === 1 ? '' : 's'}` : ''}`;
-  }
-
-  return [
-    {
-      label: 'AI urgency readout',
-      value: urgency.label,
-      tone: urgency.level
-    },
-    {
-      label: zip ? `Local context • ZIP ${zip}` : 'Local data context',
-      value: localDataText,
-      tone: 'blue'
-    },
-    {
-      label: isShelter ? 'Shelter routing' : 'Recommended route',
-      value: routeText,
-      tone: primaryShelter ? 'green' : 'blue'
-    }
-  ];
-}
-
-function applyResultEnhancements(result, query, zip) {
-  const safe = { ...(result || {}) };
-  const urgency = analyzeUrgency(query);
-
-  const priority = { green: 1, yellow: 2, red: 3 };
-  const existing = String(safe.safetyLevel || 'green').toLowerCase();
-  if (!priority[existing] || priority[urgency.level] > priority[existing]) {
-    safe.safetyLevel = urgency.level;
-  }
-
-  if (!safe.safetyNote || priority[urgency.level] > priority[existing]) {
-    safe.safetyNote = urgency.note;
-  }
-
-  safe.civicInsight = buildCivicInsight(query, zip, cityData, safe);
-  return safe;
 }
 
 function buildLocalContext(query, zip, cityData) {
@@ -322,7 +219,51 @@ function buildLocalContext(query, zip, cityData) {
     lines.push('The user language may indicate an active emergency. Prioritize safety and 911 guidance.');
   }
 
-  return lines.join(' ');
+  if (safeArray(brightDataContent).length) {
+    const relevantBright = brightDataContent
+      .filter((item) => {
+        const hay = `${item?.label || ''} ${item?.snippet || ''}`.toLowerCase();
+
+        if (isShelter && /weather|storm|alert|emergency|closure/i.test(hay)) return true;
+        if (isRoad && /road|closure|traffic|infrastructure|construction/i.test(hay)) return true;
+        if (isTrash && /city|service|cleanup|sanitation/i.test(hay)) return true;
+        if (isFireInfo && /safety|emergency|government/i.test(hay)) return true;
+
+        return false;
+      })
+      .slice(0, 2)
+      .map((item) => ({
+        category: item?.category || '',
+        label: item?.label || '',
+        snippet: String(item?.snippet || '').slice(0, 180)
+      }));
+
+    if (relevantBright.length) {
+      lines.push(`Relevant public web context: ${JSON.stringify(relevantBright)}.`);
+    }
+  }
+
+  lines.push('Use local context only to improve relevance, phrasing, and routing. Do not invent exact locations, availability, or official details unless explicitly supported.');
+  return lines.join('\n');
+}
+
+function detectShelterNeed(query = '') {
+  const q = String(query || '').toLowerCase();
+
+  const keywords = [
+    'shelter',
+    'tornado',
+    'storm shelter',
+    'tornado shelter',
+    'severe weather',
+    'safe place',
+    'where can i go',
+    'where should i go',
+    'nearest shelter',
+    'weather emergency'
+  ];
+
+  return keywords.some((word) => q.includes(word));
 }
 
 function calcZipDistance(zip, shelterZip) {
@@ -383,24 +324,35 @@ function buildShelterRecommendation(shelters = [], zip = '') {
   };
 }
 
+async function resolveShelterRecommendation(query, zip = '') {
+  if (!detectShelterNeed(query)) {
+    return { recommendation: null, zip };
+  }
+
+  const recommendation = buildShelterRecommendation(cityData.shelters, zip);
+  return { recommendation, zip };
+}
+
 function enrichResultWithShelter(result, shelterPack, query) {
   const safe = { ...(result || {}) };
-  const q = String(query || '').toLowerCase();
-  const isShelter = /tornado|storm|shelter|ema|weather|emergency/i.test(q);
 
-  if (!isShelter) return safe;
+  if (!detectShelterNeed(query)) return safe;
 
   const reco = shelterPack?.recommendation || null;
   if (reco?.primary) {
     safe.shelterRecommendation = reco;
-    safe.category = safe.category || 'Emergency Shelter';
-    safe.categoryKey = safe.categoryKey || 'shelter';
-    safe.contactDept = safe.contactDept || 'Alabama Emergency Management Agency';
+    safe.category = 'Emergency Shelter';
+    safe.categoryKey = 'shelter';
+    safe.contactDept = 'Alabama Emergency Management Agency';
     safe.contactPhone = safe.contactPhone || '911';
-    safe.contactExtra = safe.contactExtra || 'For immediate danger call 911. For official statewide emergency updates, contact Alabama EMA.';
+    safe.contactExtra = 'For immediate danger call 911. For official statewide emergency updates, contact Alabama EMA.';
     safe.reportSubject = safe.reportSubject || 'Emergency Shelter Information Request';
-    safe.reportBody = safe.reportBody || `I need tornado shelter information for Montgomery${shelterPack?.zip ? ` ZIP ${shelterPack.zip}` : ''}. Please confirm the best available shelter option and any current emergency instructions.`;
-    safe.conciergeNote = safe.conciergeNote || 'I found a shelter option using the currently loaded Montgomery safety data. Please verify official emergency instructions if severe weather is active.';
+    safe.reportBody =
+      safe.reportBody ||
+      `I need tornado shelter information for Montgomery${shelterPack?.zip ? ` ZIP ${shelterPack.zip}` : ''}. Please confirm the best available shelter option and any current emergency instructions.`;
+    safe.conciergeNote =
+      safe.conciergeNote ||
+      'I found a shelter option using the currently loaded Montgomery safety data. Please verify official emergency instructions if severe weather is active.';
 
     if (!Array.isArray(safe.steps) || !safe.steps.length) {
       const shelterName = reco.primary.name || 'the recommended shelter';
@@ -410,21 +362,33 @@ function enrichResultWithShelter(result, shelterPack, query) {
         'If severe weather is active or conditions are dangerous, call 911 immediately.'
       ];
     }
+
+    if (!safe.safetyLevel || safe.safetyLevel === 'green') {
+      safe.safetyLevel = 'yellow';
+    }
+    if (!safe.safetyNote || /no active alerts/i.test(safe.safetyNote)) {
+      safe.safetyNote = 'Shelter guidance is available. In an active severe weather emergency, rely on official alerts and call 911 if needed.';
+    }
   }
 
   return safe;
 }
 
-async function resolveShelterRecommendation(query, zip = '') {
-  const q = String(query || '').toLowerCase();
-  const isShelter = /tornado|storm|shelter|ema|weather|emergency/i.test(q);
-
-  if (!isShelter) {
-    return { recommendation: null, zip };
+function updateSafetyBadgeDemo() {
+  const badgePanel = safeEl('badgePanelTxt');
+  if (badgePanel && !badgePanel.textContent.trim()) {
+    badgePanel.textContent = 'No active advisories detected.';
   }
 
-  const recommendation = buildShelterRecommendation(cityData.shelters, zip);
-  return { recommendation, zip };
+  const hdrBadge = safeEl('hdrBadgeTxt');
+  if (hdrBadge && !hdrBadge.textContent.trim()) {
+    hdrBadge.textContent = 'All Clear';
+  }
+
+  const safetyCard = safeEl('safetyCard');
+  if (safetyCard && !safetyCard.style.background) {
+    safetyCard.style.background = '#0B3C5D';
+  }
 }
 
 async function loadCityData() {
@@ -467,6 +431,7 @@ async function loadCityData() {
 
   updatePulseCards(cityData);
   updateHealthPanel();
+  updateSafetyBadgeDemo();
 
   try {
     const bright = await loadBrightData();
@@ -536,7 +501,6 @@ async function handleSubmit() {
 
     const shelterPack = await resolveShelterRecommendation(query, zip);
     currentResult = enrichResultWithShelter(result || fallbackRoute(query), shelterPack, query);
-    currentResult = applyResultEnhancements(currentResult, query, zip);
 
     console.log('[Submit] Rendering result:', currentResult);
     renderResult(currentResult);
@@ -544,7 +508,6 @@ async function handleSubmit() {
     console.error('[Submit] Error:', err);
     const shelterPack = await resolveShelterRecommendation(query, zip);
     currentResult = enrichResultWithShelter(fallbackRoute(query), shelterPack, query);
-    currentResult = applyResultEnhancements(currentResult, query, zip);
     renderResult(currentResult);
   } finally {
     hideLoading();
@@ -592,33 +555,37 @@ function trackStatus() {
   }
 
   if (phone) {
-    alert(`No direct tracking link was provided for this request yet.\n\nFor status help, contact ${dept} at ${phone}.`);
+    const normalized = normalizePhone(phone);
+    const shouldCall = window.confirm(
+      `To track an existing case, contact ${dept} at ${phone}. Press OK to call.`
+    );
+
+    if (shouldCall && normalized) {
+      window.location.href = `tel:${normalized}`;
+    }
     return;
   }
 
-  alert('No tracking information is available for this request yet.');
+  window.alert(`To track an existing case, please contact ${dept}.`);
 }
 
 async function copyReport() {
-  if (!currentResult) return;
-
-  const btn = safeEl('copyBtn');
-  const original = btn ? btn.innerHTML : '';
+  const text = buildPlainReportText(currentResult);
+  if (!text.trim()) return;
 
   try {
-    await navigator.clipboard.writeText(buildPlainReportText(currentResult));
+    await navigator.clipboard.writeText(text);
 
-    if (btn) {
-      btn.innerHTML = '✓';
-      btn.disabled = true;
-      setTimeout(() => {
-        btn.innerHTML = original;
-        btn.disabled = false;
-      }, 1200);
-    }
+    const btn = safeEl('copyBtn');
+    if (!btn) return;
+
+    const original = btn.innerHTML;
+    btn.innerHTML = 'Copied!';
+    setTimeout(() => {
+      btn.innerHTML = original;
+    }, 1800);
   } catch (err) {
-    console.warn('[Copy] Clipboard failed:', err);
-    alert('Could not copy automatically on this browser. You can still select and copy the report text manually.');
+    console.error('[Copy] Clipboard failed:', err);
   }
 }
 
@@ -627,46 +594,47 @@ function openReportEmail() {
   window.location.href = buildMailtoLink(currentResult);
 }
 
-function toggleSafetyDetail() {
-  const panel = safeEl('badgePanel');
-  if (!panel) return;
-  panel.hidden = !panel.hidden;
-}
-
 function setQuery(text) {
   const input = safeEl('queryInput');
   if (!input) return;
+
   input.value = text;
   input.focus();
 }
 
-function escapeHtml(str = '') {
-  const div = document.createElement('div');
-  div.textContent = String(str);
-  return div.innerHTML;
+function toggleBadgePanel() {
+  const panel = safeEl('badgePanel');
+  if (panel) panel.classList.toggle('open');
 }
 
-function renderTesterTableRows(rows = []) {
-  const body = safeEl('testerBody');
-  if (!body) return;
+function toggleSafetyDetail() {
+  const sfx = safeEl('sfx');
+  if (sfx) sfx.classList.toggle('on');
 
-  if (!rows.length) {
-    body.innerHTML = `
-      <tr>
-        <td colspan="4">No test results yet.</td>
-      </tr>
-    `;
-    return;
-  }
+  const panel = safeEl('badgePanel');
+  if (panel) panel.classList.toggle('open');
+}
 
-  body.innerHTML = rows.map((row) => `
-    <tr>
-      <td>${escapeHtml(row.name || '')}</td>
-      <td>${escapeHtml(row.type || '')}</td>
-      <td class="${row.ok ? 'ok' : 'bad'}">${row.ok ? 'OK' : 'Failed'}</td>
-      <td>${escapeHtml(row.sampleFields || '')}</td>
-    </tr>
-  `).join('');
+function bindKeyboard() {
+  safeEl('queryInput')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit();
+    }
+  });
+
+  safeEl('zipInput')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit();
+    }
+  });
+}
+
+function init() {
+  bindKeyboard();
+  loadCityData();
+  runTests();
 }
 
 window.handleSubmit = handleSubmit;
@@ -675,12 +643,10 @@ window.viewShelter = viewShelter;
 window.trackStatus = trackStatus;
 window.copyReport = copyReport;
 window.openReportEmail = openReportEmail;
+window.setQuery = setQuery;
+window.toggleBadgePanel = toggleBadgePanel;
 window.toggleSafetyDetail = toggleSafetyDetail;
 window.toggleTester = toggleTester;
-window.runTests = async function () {
-  const rows = await runTests();
-  renderTesterTableRows(rows);
-};
-window.setQuery = setQuery;
+window.runTests = runTests;
 
-loadCityData();
+init();
