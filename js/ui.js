@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════
 // UI — DOM rendering & interaction handlers
-// Final synced version with shelter card support
+// Stable version with shelter card support
 // ════════════════════════════════════════════
 
 import { SERVICES } from './sources.js';
