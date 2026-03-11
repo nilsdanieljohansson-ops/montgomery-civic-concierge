@@ -126,6 +126,113 @@ function updateHealthPanel() {
   );
 }
 
+function analyzeUrgency(query = '') {
+  const q = String(query || '').toLowerCase();
+
+  const red = [
+    /tornado/,
+    /shelter/,
+    /fire/,
+    /gun/,
+    /weapon/,
+    /shooting/,
+    /medical emergency/,
+    /crime in progress/,
+    /gas leak/,
+    /active emergency/
+  ];
+
+  const yellow = [
+    /dangerous/,
+    /unsafe/,
+    /fallen tree/,
+    /tree.*fall/,
+    /flood/,
+    /storm/,
+    /power line/,
+    /traffic signal/,
+    /streetlight/,
+    /road closure/
+  ];
+
+  if (red.some((rx) => rx.test(q))) {
+    return {
+      level: 'red',
+      label: 'Immediate attention',
+      note: 'Potential safety-sensitive request detected. Use official emergency services for urgent danger.'
+    };
+  }
+
+  if (yellow.some((rx) => rx.test(q))) {
+    return {
+      level: 'yellow',
+      label: 'Safety advisory',
+      note: 'Potential public-safety issue detected. Review the guidance below and escalate if conditions worsen.'
+    };
+  }
+
+  return {
+    level: 'green',
+    label: 'Routine civic request',
+    note: 'No high-risk language detected from the request.'
+  };
+}
+
+function buildCivicInsight(query, zip, data, result = {}) {
+  const urgency = analyzeUrgency(query);
+  const isShelter = /tornado|storm|shelter|ema|emergency/i.test(String(query || ''));
+  const primaryShelter = result?.shelterRecommendation?.primary;
+  const alternatives = Array.isArray(result?.shelterRecommendation?.alternatives)
+    ? result.shelterRecommendation.alternatives.length
+    : 0;
+
+  let localDataText = `${safeArray(data.requests311).length} recent 311 requests • ${safeArray(data.paving).length} paving projects`;
+  if (isShelter) {
+    localDataText = `${safeArray(data.shelters).length} shelters mapped • ${safeArray(data.sirens).length} weather sirens connected`;
+  }
+
+  let routeText = result?.contactDept || result?.category || 'City service routing ready';
+  if (primaryShelter) {
+    routeText = `${primaryShelter.name || 'Shelter match ready'}${alternatives ? ` • ${alternatives} alternate option${alternatives === 1 ? '' : 's'}` : ''}`;
+  }
+
+  return [
+    {
+      label: 'AI urgency readout',
+      value: urgency.label,
+      tone: urgency.level
+    },
+    {
+      label: zip ? `Local context • ZIP ${zip}` : 'Local data context',
+      value: localDataText,
+      tone: 'blue'
+    },
+    {
+      label: isShelter ? 'Shelter routing' : 'Recommended route',
+      value: routeText,
+      tone: primaryShelter ? 'green' : 'blue'
+    }
+  ];
+}
+
+function applyResultEnhancements(result, query, zip) {
+  const safe = { ...(result || {}) };
+  const urgency = analyzeUrgency(query);
+
+  const priority = { green: 1, yellow: 2, red: 3 };
+  const existing = String(safe.safetyLevel || 'green').toLowerCase();
+  if (!priority[existing] || priority[urgency.level] > priority[existing]) {
+    safe.safetyLevel = urgency.level;
+  }
+
+  if (!safe.safetyNote || priority[urgency.level] > priority[existing]) {
+    safe.safetyNote = urgency.note;
+  }
+
+  safe.civicInsight = buildCivicInsight(query, zip, cityData, safe);
+  return safe;
+}
+
 function buildLocalContext(query, zip, cityData) {
   const q = String(query || '').toLowerCase();
   const lines = [];
@@ -219,184 +326,130 @@ function buildLocalContext(query, zip, cityData) {
     lines.push('The user language may indicate an active emergency. Prioritize safety and 911 guidance.');
   }
 
-  if (safeArray(brightDataContent).length) {
-    const relevantBright = brightDataContent
-      .filter((item) => {
-        const hay = `${item?.label || ''} ${item?.snippet || ''}`.toLowerCase();
-
-        if (isShelter && /weather|storm|alert|emergency|closure/i.test(hay)) return true;
-        if (isRoad && /road|closure|traffic|infrastructure|construction/i.test(hay)) return true;
-        if (isTrash && /city|service|cleanup|sanitation/i.test(hay)) return true;
-        if (isFireInfo && /safety|emergency|government/i.test(hay)) return true;
-
-        return false;
-      })
-      .slice(0, 2)
-      .map((item) => ({
-        category: item?.category || '',
-        label: item?.label || '',
-        snippet: String(item?.snippet || '').slice(0, 180)
-      }));
-
-    if (relevantBright.length) {
-      lines.push(`Relevant public web context: ${JSON.stringify(relevantBright)}.`);
-    }
-  }
-
-  lines.push('Use local context only to improve relevance, phrasing, and routing. Do not invent exact locations, availability, or official details unless explicitly supported.');
-  return lines.join('\n');
+  return lines.join(' ');
 }
 
-function detectShelterNeed(query = '') {
-  const q = String(query || '').toLowerCase();
+function calcZipDistance(zip, shelterZip) {
+  const z1 = Number(String(zip || '').trim());
+  const z2 = Number(String(shelterZip || '').trim());
+  if (!Number.isFinite(z1) || !Number.isFinite(z2)) return 9999;
+  return Math.abs(z1 - z2);
+}
 
-  const keywords = [
-    'shelter',
-    'tornado',
-    'storm shelter',
-    'tornado shelter',
-    'severe weather',
-    'safe place',
-    'where can i go',
-    'need somewhere safe',
-    'emergency shelter'
-  ];
+function extractShelterMeta(item = {}) {
+  const a = firstAttr(item);
+
+  const streetNumber = firstValue(a, ['ST_NUMBER', 'ADDRNUM', 'HOUSE_NO']);
+  const streetName = firstValue(a, ['ST_NAME', 'STREET', 'ROAD_NAME']);
+  const fullAddress =
+    firstValue(a, ['FULLADDR', 'ADDRESS', 'ADDRLINE1']) ||
+    [streetNumber, streetName].filter(Boolean).join(' ').trim();
 
   return {
-    needsShelter: keywords.some((word) => q.includes(word)),
-    urgency: /now|urgent|immediately|asap|right now/.test(q) ? 'high' : 'normal'
+    name: firstValue(a, ['SHELTER', 'NAME', 'FACILITY', 'LOCATION']) || 'Tornado Shelter',
+    address: fullAddress || 'Montgomery, AL',
+    zip: firstValue(a, ['ZIP', 'ZIPCODE', 'POSTAL']),
+    accessibility: cleanAccessibility(firstValue(a, ['ACCESSIBILITY', 'ACCESS', 'ADA'])),
+    capacity: firstValue(a, ['CAPACITY', 'OCCUPANCY']),
+    phone: firstValue(a, ['PHONE', 'CONTACT', 'PHONE_NUMBER']),
+    notes: firstValue(a, ['NOTES', 'COMMENT', 'COMMENTS']),
+    lat: a?.Latitude ?? a?.LATITUDE ?? a?.Y ?? a?.y ?? null,
+    lon: a?.Longitude ?? a?.LONGITUDE ?? a?.X ?? a?.x ?? null
   };
 }
 
-function normalizeShelterFeature(row = {}) {
-  const attrs = firstAttr(row);
-  const geom = row?.geometry || {};
-
-  const streetNumber = firstValue(attrs, ['ST_NUMBER', 'NUMBER']);
-  const streetName = firstValue(attrs, ['ST_NAME', 'STREET', 'ROAD']);
-  const composedStreet = [streetNumber, streetName].filter(Boolean).join(' ').trim();
-
-  return {
-    id: firstValue(attrs, ['OBJECTID', 'ObjectId', 'FID', 'ID']),
-    name: firstValue(attrs, ['SHELTER', 'NAME', 'FACILITY', 'FACILITYNAME', 'SHELTER_NAME']) || 'Tornado Shelter',
-    address: firstValue(attrs, ['FULLADDR', 'ADDRESS', 'SITE_ADDRESS', 'LOCATION']) || composedStreet,
-    city: firstValue(attrs, ['CITY', 'MUNICIPALITY']) || 'Montgomery',
-    zip: firstValue(attrs, ['ZIP', 'ZIPCODE', 'POSTAL', 'POSTCODE']),
-    phone: firstValue(attrs, ['PHONE', 'TEL', 'CONTACT_PHONE', 'CONTACT']),
-    accessibility: cleanAccessibility(
-      firstValue(attrs, ['ACCESSIBILITY', 'ADA', 'ACCESSIBLE', 'TYPE'])
-    ),
-    capacity: firstValue(attrs, ['CAPACITY', 'MAX_CAPACITY']),
-    notes: firstValue(attrs, ['NOTES', 'DESCRIPTION', 'DETAILS']),
-    lat: geom.y ?? attrs.LAT ?? attrs.LATITUDE ?? null,
-    lon: geom.x ?? attrs.LON ?? attrs.LONGITUDE ?? attrs.LNG ?? null
-  };
-}
-
-function scoreShelter(shelter, context = {}) {
+function scoreShelter(item, zip = '') {
+  const meta = extractShelterMeta(item);
   let score = 0;
 
-  if (shelter.name) score += 20;
-  if (shelter.address) score += 20;
-  if (shelter.phone) score += 10;
-  if (shelter.accessibility) score += 12;
-  if (shelter.capacity) score += 8;
-  if (shelter.notes) score += 4;
-  if (shelter.lat != null && shelter.lon != null) score += 8;
-
-  if (context.zip && shelter.zip && String(context.zip) === String(shelter.zip)) {
-    score += 25;
+  if (zip && meta.zip) {
+    score -= calcZipDistance(zip, meta.zip);
   }
 
-  return score;
+  if (meta.accessibility && /ada|accessible|general/i.test(meta.accessibility)) score += 5;
+  if (meta.capacity) score += 1;
+  if (meta.phone) score += 1;
+  if (meta.address) score += 2;
+
+  return { score, meta };
 }
 
-function rankShelters(rows = [], context = {}) {
-  return safeArray(rows)
-    .map(normalizeShelterFeature)
-    .map((shelter) => ({
-      ...shelter,
-      score: scoreShelter(shelter, context)
-    }))
+function buildShelterRecommendation(shelters = [], zip = '') {
+  const scored = safeArray(shelters)
+    .map((item) => scoreShelter(item, zip))
     .sort((a, b) => b.score - a.score);
-}
 
-function buildShelterSteps() {
-  return [
-    'Move to a safe indoor location immediately if severe weather is nearby.',
-    'Review the recommended shelter below and call ahead if possible.',
-    'Bring medications, ID, water, and your phone charger if time allows.'
-  ];
+  if (!scored.length) return null;
+
+  return {
+    primary: scored[0]?.meta || null,
+    alternatives: scored.slice(1, 3).map((x) => x.meta)
+  };
 }
 
 function enrichResultWithShelter(result, shelterPack, query) {
-  const safeResult = result || fallbackRoute(query);
+  const safe = { ...(result || {}) };
+  const q = String(query || '').toLowerCase();
+  const isShelter = /tornado|storm|shelter|ema|weather|emergency/i.test(q);
 
-  if (!shelterPack?.primary) {
-    return {
-      ...safeResult,
-      shelterRecommendation: null
-    };
+  if (!isShelter) return safe;
+
+  const reco = shelterPack?.recommendation || null;
+  if (reco?.primary) {
+    safe.shelterRecommendation = reco;
+    safe.category = safe.category || 'Emergency Shelter';
+    safe.categoryKey = safe.categoryKey || 'shelter';
+    safe.contactDept = safe.contactDept || 'Alabama Emergency Management Agency';
+    safe.contactPhone = safe.contactPhone || '911';
+    safe.contactExtra = safe.contactExtra || 'For immediate danger call 911. For official statewide emergency updates, contact Alabama EMA.';
+    safe.reportSubject = safe.reportSubject || 'Emergency Shelter Information Request';
+    safe.reportBody = safe.reportBody || `I need tornado shelter information for Montgomery${shelterPack?.zip ? ` ZIP ${shelterPack.zip}` : ''}. Please confirm the best available shelter option and any current emergency instructions.`;
+    safe.conciergeNote = safe.conciergeNote || 'I found a shelter option using the currently loaded Montgomery safety data. Please verify official emergency instructions if severe weather is active.';
+
+    if (!Array.isArray(safe.steps) || !safe.steps.length) {
+      const shelterName = reco.primary.name || 'the recommended shelter';
+      safe.steps = [
+        `Review ${shelterName} and confirm the address before traveling.`,
+        'Use Open Directions or call the shelter for access instructions.',
+        'If severe weather is active or conditions are dangerous, call 911 immediately.'
+      ];
+    }
   }
 
-  return {
-    ...safeResult,
-    category: /information/i.test(safeResult.category || '')
-      ? safeResult.category
-      : 'Emergency Shelter Information',
-    categoryKey: 'ema',
-    contactDept: safeResult.contactDept || 'Emergency Management Agency',
-    contactPhone: safeResult.contactPhone || '(334) 625-2800',
-    contactExtra: shelterPack.primary.address
-      ? `Recommended shelter address: ${shelterPack.primary.address}`
-      : safeResult.contactExtra,
-    safetyLevel: safeResult.safetyLevel === 'red' ? 'red' : 'yellow',
-    safetyNote: safeResult.safetyNote || 'Weather-related resources are available nearby.',
-    steps: buildShelterSteps(),
-    shelterRecommendation: {
-      primary: shelterPack.primary,
-      alternatives: shelterPack.alternatives || []
-    }
-  };
+  return safe;
 }
 
 async function resolveShelterRecommendation(query, zip = '') {
-  const shelterIntent = detectShelterNeed(query);
+  const q = String(query || '').toLowerCase();
+  const isShelter = /tornado|storm|shelter|ema|weather|emergency/i.test(q);
 
-  if (!shelterIntent.needsShelter) {
-    return null;
+  if (!isShelter) {
+    return { recommendation: null, zip };
   }
 
-  const ranked = rankShelters(cityData.shelters, { zip });
-  const primary = ranked[0] || null;
-  const alternatives = ranked.slice(1, 3);
-
-  return {
-    primary,
-    alternatives
-  };
+  const recommendation = buildShelterRecommendation(cityData.shelters, zip);
+  return { recommendation, zip };
 }
 
 async function loadCityData() {
-  const find = (key) => SOURCES.find((s) => s.key === key)?.url;
   let usedDemo = false;
 
   if (CONFIG.MODE === 'demo') {
     await loadDemoPulse();
     usedDemo = true;
   } else {
-    const [sh, si, c9, r3, pv] = await Promise.allSettled([
-      arcQuery(find('tornado_shelters'), { resultRecordCount: '200' }),
-      arcQuery(find('weather_sirens'), { resultRecordCount: '200' }),
-      arcQuery(find('calls_911'), { resultRecordCount: '20' }),
-      arcQuery(find('received_311'), { resultRecordCount: '20' }),
-      arcQuery(find('paving'), { resultRecordCount: '20' })
-    ]);
+    const shelterQ = arcQuery(CONFIG.arcgis.shelters.url, CONFIG.arcgis.shelters.params);
+    const sirenQ = arcQuery(CONFIG.arcgis.sirens.url, CONFIG.arcgis.sirens.params);
+    const callsQ = arcQuery(CONFIG.arcgis.calls911.url, CONFIG.arcgis.calls911.params);
+    const reqQ = arcQuery(CONFIG.arcgis.requests311.url, CONFIG.arcgis.requests311.params);
+    const pavingQ = arcQuery(CONFIG.arcgis.paving.url, CONFIG.arcgis.paving.params);
+
+    const [sh, si, c9, rq, pv] = await Promise.allSettled([shelterQ, sirenQ, callsQ, reqQ, pavingQ]);
 
     cityData.shelters = sh.status === 'fulfilled' ? safeArray(sh.value) : [];
     cityData.sirens = si.status === 'fulfilled' ? safeArray(si.value) : [];
     cityData.calls911 = c9.status === 'fulfilled' ? safeArray(c9.value) : [];
-    cityData.requests311 = r3.status === 'fulfilled' ? safeArray(r3.value) : [];
+    cityData.requests311 = rq.status === 'fulfilled' ? safeArray(rq.value) : [];
     cityData.paving = pv.status === 'fulfilled' ? safeArray(pv.value) : [];
 
     const totalRecords =
@@ -487,6 +540,7 @@ async function handleSubmit() {
 
     const shelterPack = await resolveShelterRecommendation(query, zip);
     currentResult = enrichResultWithShelter(result || fallbackRoute(query), shelterPack, query);
+    currentResult = applyResultEnhancements(currentResult, query, zip);
 
     console.log('[Submit] Rendering result:', currentResult);
     renderResult(currentResult);
@@ -494,6 +548,7 @@ async function handleSubmit() {
     console.error('[Submit] Error:', err);
     const shelterPack = await resolveShelterRecommendation(query, zip);
     currentResult = enrichResultWithShelter(fallbackRoute(query), shelterPack, query);
+    currentResult = applyResultEnhancements(currentResult, query, zip);
     renderResult(currentResult);
   } finally {
     hideLoading();
@@ -522,37 +577,33 @@ function trackStatus() {
   }
 
   if (phone) {
-    const normalized = normalizePhone(phone);
-    const shouldCall = window.confirm(
-      `To track an existing case, contact ${dept} at ${phone}. Press OK to call.`
-    );
-
-    if (shouldCall && normalized) {
-      window.location.href = `tel:${normalized}`;
-    }
+    alert(`No direct tracking link was provided for this request yet.\n\nFor status help, contact ${dept} at ${phone}.`);
     return;
   }
 
-  window.alert(`To track an existing case, please contact ${dept}.`);
+  alert('No tracking information is available for this request yet.');
 }
 
 async function copyReport() {
-  const text = buildPlainReportText(currentResult);
-  if (!text.trim()) return;
+  if (!currentResult) return;
+
+  const btn = safeEl('copyBtn');
+  const original = btn ? btn.innerHTML : '';
 
   try {
-    await navigator.clipboard.writeText(text);
+    await navigator.clipboard.writeText(buildPlainReportText(currentResult));
 
-    const btn = safeEl('copyBtn');
-    if (!btn) return;
-
-    const original = btn.innerHTML;
-    btn.innerHTML = 'Copied!';
-    setTimeout(() => {
-      btn.innerHTML = original;
-    }, 1800);
+    if (btn) {
+      btn.innerHTML = '✓';
+      btn.disabled = true;
+      setTimeout(() => {
+        btn.innerHTML = original;
+        btn.disabled = false;
+      }, 1200);
+    }
   } catch (err) {
-    console.error('[Copy] Clipboard failed:', err);
+    console.warn('[Copy] Clipboard failed:', err);
+    alert('Could not copy automatically on this browser. You can still select and copy the report text manually.');
   }
 }
 
@@ -561,47 +612,46 @@ function openReportEmail() {
   window.location.href = buildMailtoLink(currentResult);
 }
 
+function toggleSafetyDetail() {
+  const panel = safeEl('badgePanel');
+  if (!panel) return;
+  panel.hidden = !panel.hidden;
+}
+
 function setQuery(text) {
   const input = safeEl('queryInput');
   if (!input) return;
-
   input.value = text;
   input.focus();
 }
 
-function toggleBadgePanel() {
-  const panel = safeEl('badgePanel');
-  if (panel) panel.classList.toggle('open');
+function escapeHtml(str = '') {
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
 }
 
-function toggleSafetyDetail() {
-  const sfx = safeEl('sfx');
-  if (sfx) sfx.classList.toggle('on');
+function renderTesterTableRows(rows = []) {
+  const body = safeEl('testerBody');
+  if (!body) return;
 
-  const panel = safeEl('badgePanel');
-  if (panel) panel.classList.toggle('open');
-}
+  if (!rows.length) {
+    body.innerHTML = `
+      <tr>
+        <td colspan="4">No test results yet.</td>
+      </tr>
+    `;
+    return;
+  }
 
-function bindKeyboard() {
-  safeEl('queryInput')?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSubmit();
-    }
-  });
-
-  safeEl('zipInput')?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSubmit();
-    }
-  });
-}
-
-function init() {
-  bindKeyboard();
-  loadCityData();
-  runTests();
+  body.innerHTML = rows.map((row) => `
+    <tr>
+      <td>${escapeHtml(row.name || '')}</td>
+      <td>${escapeHtml(row.type || '')}</td>
+      <td class="${row.ok ? 'ok' : 'bad'}">${row.ok ? 'OK' : 'Failed'}</td>
+      <td>${escapeHtml(row.sampleFields || '')}</td>
+    </tr>
+  `).join('');
 }
 
 window.handleSubmit = handleSubmit;
@@ -609,10 +659,12 @@ window.generateReport = generateReport;
 window.trackStatus = trackStatus;
 window.copyReport = copyReport;
 window.openReportEmail = openReportEmail;
-window.setQuery = setQuery;
-window.toggleBadgePanel = toggleBadgePanel;
 window.toggleSafetyDetail = toggleSafetyDetail;
 window.toggleTester = toggleTester;
-window.runTests = runTests;
+window.runTests = async function () {
+  const rows = await runTests();
+  renderTesterTableRows(rows);
+};
+window.setQuery = setQuery;
 
-init();
+loadCityData();
