@@ -16,7 +16,7 @@ import {
   showLoading,
   hideLoading
 } from './ui.js';
-import { toggleTester, runTests } from './tester.js';
+import { runTests } from './tester.js';
 import { loadBrightData, getLastCrawlTime, isConfigured } from './brightdata.js';
 
 const $ = (id) => document.getElementById(id);
@@ -635,6 +635,17 @@ function toggleSafetyDetail() {
   if (panel) panel.classList.toggle('open');
 }
 
+function toggleTesterPanel() {
+  const panel = safeEl('testerPanel');
+  if (!panel) return;
+
+  panel.hidden = !panel.hidden;
+
+  if (!panel.hidden) {
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
 function bindKeyboard() {
   safeEl('queryInput')?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -666,7 +677,7 @@ window.openReportEmail = openReportEmail;
 window.setQuery = setQuery;
 window.toggleBadgePanel = toggleBadgePanel;
 window.toggleSafetyDetail = toggleSafetyDetail;
-window.toggleTester = toggleTester;
+window.toggleTester = toggleTesterPanel;
 window.runTests = runTests;
 
 init();
