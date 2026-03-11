@@ -1,6 +1,7 @@
 // ════════════════════════════════════════════
 // MAIN — Application entry point
-// Final synced version with shelter enrichment
+// Stable version with shelter support + Bright Data preserved
+// Defensive against missing config entries
 // ════════════════════════════════════════════
 
 import { SOURCES } from './sources.js';
@@ -126,15 +127,15 @@ function updateHealthPanel() {
   );
 }
 
-function buildLocalContext(query, zip, cityData) {
+function buildLocalContext(query, zip, cityDataObj) {
   const q = String(query || '').toLowerCase();
   const lines = [];
 
-  const shelters = safeArray(cityData?.shelters);
-  const sirens = safeArray(cityData?.sirens);
-  const calls911 = safeArray(cityData?.calls911);
-  const requests311 = safeArray(cityData?.requests311);
-  const paving = safeArray(cityData?.paving);
+  const shelters = safeArray(cityDataObj?.shelters);
+  const sirens = safeArray(cityDataObj?.sirens);
+  const calls911 = safeArray(cityDataObj?.calls911);
+  const requests311 = safeArray(cityDataObj?.requests311);
+  const paving = safeArray(cityDataObj?.paving);
 
   lines.push('Local Montgomery civic data context is available.');
   if (zip) lines.push(`Resident ZIP code provided: ${zip}.`);
@@ -166,8 +167,6 @@ function buildLocalContext(query, zip, cityData) {
     if (sirenSamples.length) {
       lines.push(`Sample siren records: ${JSON.stringify(sirenSamples)}.`);
     }
-
-    lines.push('Use this context to make shelter guidance feel local, but do not claim an exact nearest location unless the context explicitly supports it.');
   }
 
   if (isRoad) {
@@ -187,8 +186,6 @@ function buildLocalContext(query, zip, cityData) {
     if (requestSamples.length) {
       lines.push(`Sample 311 request records: ${JSON.stringify(requestSamples)}.`);
     }
-
-    lines.push('Use this context to improve routing for roads, street maintenance, drainage, streetlights, or infrastructure-related issues.');
   }
 
   if (isTrash) {
@@ -211,8 +208,6 @@ function buildLocalContext(query, zip, cityData) {
     if (callSamples.length) {
       lines.push(`Sample 911 call records: ${JSON.stringify(callSamples)}.`);
     }
-
-    lines.push('If the request is only asking for a station location or department information, treat it as informational, not an active emergency.');
   }
 
   if (isEmergency) {
@@ -243,13 +238,11 @@ function buildLocalContext(query, zip, cityData) {
     }
   }
 
-  lines.push('Use local context only to improve relevance, phrasing, and routing. Do not invent exact locations, availability, or official details unless explicitly supported.');
   return lines.join('\n');
 }
 
 function detectShelterNeed(query = '') {
   const q = String(query || '').toLowerCase();
-
   const keywords = [
     'shelter',
     'tornado',
@@ -262,7 +255,6 @@ function detectShelterNeed(query = '') {
     'nearest shelter',
     'weather emergency'
   ];
-
   return keywords.some((word) => q.includes(word));
 }
 
@@ -299,10 +291,7 @@ function scoreShelter(item, zip = '') {
   const meta = extractShelterMeta(item);
   let score = 0;
 
-  if (zip && meta.zip) {
-    score -= calcZipDistance(zip, meta.zip);
-  }
-
+  if (zip && meta.zip) score -= calcZipDistance(zip, meta.zip);
   if (meta.accessibility && /ada|accessible|general/i.test(meta.accessibility)) score += 5;
   if (meta.capacity) score += 1;
   if (meta.phone) score += 1;
@@ -391,6 +380,27 @@ function updateSafetyBadgeDemo() {
   }
 }
 
+function getArcConfig(name) {
+  const arcgis = CONFIG?.arcgis || {};
+  return arcgis?.[name] && arcgis[name].url ? arcgis[name] : null;
+}
+
+async function queryArcSource(name) {
+  const source = getArcConfig(name);
+  if (!source) {
+    console.warn(`[Init] Missing ArcGIS config for "${name}"`);
+    return [];
+  }
+
+  try {
+    const rows = await arcQuery(source.url, source.params || {});
+    return safeArray(rows);
+  } catch (err) {
+    console.warn(`[Init] ArcGIS query failed for "${name}":`, err);
+    return [];
+  }
+}
+
 async function loadCityData() {
   let usedDemo = false;
 
@@ -398,19 +408,11 @@ async function loadCityData() {
     await loadDemoPulse();
     usedDemo = true;
   } else {
-    const shelterQ = arcQuery(CONFIG.arcgis.shelters.url, CONFIG.arcgis.shelters.params);
-    const sirenQ = arcQuery(CONFIG.arcgis.sirens.url, CONFIG.arcgis.sirens.params);
-    const callsQ = arcQuery(CONFIG.arcgis.calls911.url, CONFIG.arcgis.calls911.params);
-    const reqQ = arcQuery(CONFIG.arcgis.requests311.url, CONFIG.arcgis.requests311.params);
-    const pavingQ = arcQuery(CONFIG.arcgis.paving.url, CONFIG.arcgis.paving.params);
-
-    const [sh, si, c9, rq, pv] = await Promise.allSettled([shelterQ, sirenQ, callsQ, reqQ, pavingQ]);
-
-    cityData.shelters = sh.status === 'fulfilled' ? safeArray(sh.value) : [];
-    cityData.sirens = si.status === 'fulfilled' ? safeArray(si.value) : [];
-    cityData.calls911 = c9.status === 'fulfilled' ? safeArray(c9.value) : [];
-    cityData.requests311 = rq.status === 'fulfilled' ? safeArray(rq.value) : [];
-    cityData.paving = pv.status === 'fulfilled' ? safeArray(pv.value) : [];
+    cityData.shelters = await queryArcSource('shelters');
+    cityData.sirens = await queryArcSource('sirens');
+    cityData.calls911 = await queryArcSource('calls911');
+    cityData.requests311 = await queryArcSource('requests311');
+    cityData.paving = await queryArcSource('paving');
 
     const totalRecords =
       cityData.shelters.length +
