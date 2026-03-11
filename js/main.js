@@ -380,82 +380,7 @@ function updateSafetyBadgeDemo() {
   }
 }
 
-function getArcConfig(name) {
-  const arcgis = CONFIG?.arcgis || {};
-  return arcgis?.[name] && arcgis[name].url ? arcgis[name] : null;
-}
-
-async function queryArcSource(name) {
-  const source = getArcConfig(name);
-  if (!source) {
-    console.warn(`[Init] Missing ArcGIS config for "${name}"`);
-    return [];
-  }
-
-  try {
-    const rows = await arcQuery(source.url, source.params || {});
-    return safeArray(rows);
-  } catch (err) {
-    console.warn(`[Init] ArcGIS query failed for "${name}":`, err);
-    return [];
-  }
-}
-
-async function loadCityData() {
-  let usedDemo = false;
-
-  if (CONFIG.MODE === 'demo') {
-    await loadDemoPulse();
-    usedDemo = true;
-  } else {
-    cityData.shelters = await queryArcSource('shelters');
-    cityData.sirens = await queryArcSource('sirens');
-    cityData.calls911 = await queryArcSource('calls911');
-    cityData.requests311 = await queryArcSource('requests311');
-    cityData.paving = await queryArcSource('paving');
-
-    const totalRecords =
-      cityData.shelters.length +
-      cityData.sirens.length +
-      cityData.calls911.length +
-      cityData.requests311.length +
-      cityData.paving.length;
-
-    if (totalRecords === 0 && CONFIG.MODE === 'auto') {
-      console.warn('[Init] All ArcGIS queries returned empty — falling back to demo data');
-      await loadDemoPulse();
-      usedDemo = true;
-    }
-  }
-
-  const dsCount = safeEl('dsCount');
-  if (dsCount) dsCount.textContent = String(SOURCES.length);
-
-  updatePulseCards(cityData);
-  updateHealthPanel();
-  updateSafetyBadgeDemo();
-
-  try {
-    const bright = await loadBrightData();
-    brightDataContent = safeArray(bright);
-    updateBrightDataCards(brightDataContent, getLastCrawlTime(), isConfigured());
-    console.log('[Init] Bright Data loaded:', brightDataContent.length, 'items');
-  } catch (err) {
-    brightDataContent = [];
-    console.warn('[Init] Bright Data load failed:', err);
-    updateBrightDataCards([], getLastCrawlTime(), isConfigured());
-  }
-
-  console.log('[Init] City data loaded:', {
-    mode: usedDemo ? 'demo' : 'live',
-    shelters: cityData.shelters.length,
-    sirens: cityData.sirens.length,
-    calls911: cityData.calls911.length,
-    requests311: cityData.requests311.length,
-    paving: cityData.paving.length
-  });
-}
-
+function getArcConfig(name)
 async function loadDemoPulse() {
   try {
     const res = await fetch(CONFIG.demoPaths.pulse);
@@ -652,3 +577,4 @@ window.toggleTester = toggleTester;
 window.runTests = runTests;
 
 init();
+
