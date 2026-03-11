@@ -249,7 +249,7 @@ export function renderResult(result) {
 
     const stepBtns = isShelterFlow
       ? [
-          `<a class="step-btn step-btn-primary" href="#shelterCard">View Shelter</a>`,
+          `<button type="button" class="step-btn step-btn-primary" onclick="viewShelter()">View Shelter</button>`,
           `<button type="button" class="step-btn" onclick="toggleSafetyDetail()">View Alerts</button>`,
           `<a class="step-btn" href="tel:${esc(callPhone)}">Call Now</a>`
         ]
