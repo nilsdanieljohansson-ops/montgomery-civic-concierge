@@ -90,10 +90,6 @@ function buildPlainReportText(result) {
   return `Subject: ${subject}\n\n${body}`.trim();
 }
 
-function normalizePhone(phone = '') {
-  return String(phone).replace(/[^\d+]/g, '');
-}
-
 function buildMailtoLink(result) {
   const r = result || {};
   const subject = encodeURIComponent(r.reportSubject || 'City Service Request');
@@ -564,6 +560,25 @@ function generateReport() {
   card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+function viewShelter() {
+  const shelterContainer = safeEl('rShelter');
+  const shelterCard = safeEl('shelterCard');
+
+  if (shelterContainer) {
+    shelterContainer.hidden = false;
+  }
+
+  if (shelterCard) {
+    shelterCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+
+  const resultArea = safeEl('resultArea');
+  if (resultArea) {
+    resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
 function trackStatus() {
   if (!currentResult) return;
 
@@ -656,6 +671,7 @@ function renderTesterTableRows(rows = []) {
 
 window.handleSubmit = handleSubmit;
 window.generateReport = generateReport;
+window.viewShelter = viewShelter;
 window.trackStatus = trackStatus;
 window.copyReport = copyReport;
 window.openReportEmail = openReportEmail;
