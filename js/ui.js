@@ -161,6 +161,30 @@ export function updateCityHealthScore(score = 92, meta = 'Based on city service 
   if ($('cityHealthMeta')) $('cityHealthMeta').textContent = meta;
 }
 
+function renderInsightBanner(items = []) {
+  const el = $('insightBanner');
+  if (!el) return;
+
+  if (!Array.isArray(items) || !items.length) {
+    el.innerHTML = '';
+    el.hidden = true;
+    return;
+  }
+
+  el.innerHTML = items.map((item) => {
+    const tone = String(item?.tone || 'blue').toLowerCase();
+    const toneClass = tone === 'red' ? 'alert-red' : tone === 'yellow' ? 'alert-yellow' : '';
+    return `
+      <div class="insight-card">
+        <div class="insight-k">${esc(item?.label || 'Civic insight')}</div>
+        <div class="insight-v ${toneClass}">${esc(item?.value || 'Ready')}</div>
+      </div>
+    `;
+  }).join('');
+
+  el.hidden = false;
+}
+
 export function renderResult(result) {
   const safeResult = result || {};
   console.log('[UI] Rendering result:', safeResult);
@@ -180,6 +204,8 @@ export function renderResult(result) {
     if ($('rIcon')) $('rIcon').textContent = svc.icon || '🏛️';
     if ($('rCat')) $('rCat').textContent = safeResult.category || svc.cat || 'City Services';
     if ($('rTag')) $('rTag').textContent = svc.cat !== (safeResult.category || '') ? svc.cat : 'City Service';
+
+    renderInsightBanner(safeResult.civicInsight || []);
 
     const level = safeResult.safetyLevel || 'green';
     const labels = {
@@ -306,6 +332,7 @@ export function showLoading() {
   setHidden('conciergeCard', true);
   setHidden('rChips', true);
   setHidden('rShelter', true);
+  setHidden('insightBanner', true);
 }
 
 export function hideLoading() {
