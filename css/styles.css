@@ -394,6 +394,10 @@ input:focus-visible {
   transform: none;
 }
 
+.search-btn svg {
+  flex-shrink: 0;
+}
+
 .qtags {
   display: flex;
   flex-wrap: wrap;
@@ -1362,4 +1366,5 @@ input:focus-visible {
     justify-content: center;
   }
 }
+
 
