@@ -258,6 +258,20 @@ input:focus-visible {
   font-size: 14px;
 }
 
+.hero-inline-example {
+  border: none;
+  background: transparent;
+  color: var(--text2);
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.hero-inline-example:hover {
+  color: var(--navy);
+  text-decoration: underline;
+}
+
 .hero-examples-label {
   font-weight: 700;
   color: var(--navy);
@@ -1430,3 +1444,4 @@ input:focus-visible {
     justify-content: center;
   }
 }
+
