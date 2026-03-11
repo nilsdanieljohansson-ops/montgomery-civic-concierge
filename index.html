@@ -147,42 +147,48 @@
 
           <div class="hero-examples" aria-label="Example questions">
             <span class="hero-examples-label">Try asking:</span>
-            <span>How do I report a pothole?</span>
-            <span>Where is the nearest tornado shelter?</span>
-            <span>How do I report a code violation?</span>
+            <button type="button" class="hero-inline-example" onclick="setQuery('How do I report a pothole?')">
+              How do I report a pothole?
+            </button>
+            <button type="button" class="hero-inline-example" onclick="setQuery('Where is the nearest tornado shelter?')">
+              Where is the nearest tornado shelter?
+            </button>
+            <button type="button" class="hero-inline-example" onclick="setQuery('How do I report a code violation?')">
+              How do I report a code violation?
+            </button>
           </div>
 
-       <div class="demo-strip" aria-label="Live demo highlights">
-  <div class="demo-card demo-card-data">
-    <div class="demo-card-icon">📊</div>
-    <div class="demo-card-kicker">Live city data</div>
-    <div class="demo-card-title">Open datasets + civic signals</div>
-    <div class="demo-card-text">
-      Connected city data helps the concierge feel local, practical, and relevant.
-    </div>
-  </div>
+          <div class="demo-strip" aria-label="Live demo highlights">
+            <div class="demo-card demo-card-data">
+              <div class="demo-card-icon">📊</div>
+              <div class="demo-card-kicker">Live city data</div>
+              <div class="demo-card-title">Open datasets + civic signals</div>
+              <div class="demo-card-text">
+                Connected city data helps the concierge feel local, practical, and relevant.
+              </div>
+            </div>
 
-  <div class="demo-card demo-card-emergency">
-    <div class="demo-card-icon">🌪️</div>
-    <div class="demo-card-kicker">Emergency aware</div>
-    <div class="demo-card-title">Tornado shelter routing + safety cues</div>
-    <div class="demo-card-text">
-      Detects urgent requests and guides residents to safer next steps faster.
-    </div>
-  </div>
+            <div class="demo-card demo-card-emergency">
+              <div class="demo-card-icon">🌪️</div>
+              <div class="demo-card-kicker">Emergency aware</div>
+              <div class="demo-card-title">Tornado shelter routing + safety cues</div>
+              <div class="demo-card-text">
+                Detects urgent requests and guides residents to safer next steps faster.
+              </div>
+            </div>
 
-  <div class="demo-card demo-card-action">
-    <div class="demo-card-icon">✅</div>
-    <div class="demo-card-kicker">Action ready</div>
-    <div class="demo-card-title">Next steps + ready-to-send report</div>
-    <div class="demo-card-text">
-      Turns a question into a useful action flow instead of just returning an answer.
-    </div>
-  </div>
-</div>
+            <div class="demo-card demo-card-action">
+              <div class="demo-card-icon">✅</div>
+              <div class="demo-card-kicker">Action ready</div>
+              <div class="demo-card-title">Next steps + ready-to-send report</div>
+              <div class="demo-card-text">
+                Turns a question into a useful action flow instead of just returning an answer.
+              </div>
+            </div>
+          </div>
 
           <div class="qtags" aria-label="Quick question shortcuts">
-            <button type="button" onclick="setQuery('My trash wasn\\'t picked up')">🗑️ Missed pickup</button>
+            <button type="button" onclick="setQuery(`My trash wasn't picked up`)">🗑️ Missed pickup</button>
             <button type="button" onclick="setQuery('I need a business license')">🏢 Business license</button>
             <button type="button" onclick="setQuery('Pothole on my street')">🛣️ Pothole</button>
             <button type="button" onclick="setQuery('Streetlight is out near my house')">💡 Streetlight out</button>
@@ -203,8 +209,10 @@
 
         <div class="loader" id="loader" aria-live="polite" aria-atomic="true">
           <div class="spinner" aria-hidden="true"></div>
-          <div class="loader-t">✨ AI analyzing your civic request...</div>
-          <div class="loader-s">Checking city services, safety context, and public web updates</div>
+          <div>
+            <div class="loader-t">✨ AI analyzing your civic request...</div>
+            <div class="loader-s">Checking city services, safety context, and public web updates</div>
+          </div>
         </div>
 
         <section
@@ -554,5 +562,3 @@
   <script type="module" src="js/main.js"></script>
 </body>
 </html>
-
-
