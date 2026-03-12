@@ -6,7 +6,7 @@
 
 **Challenge area:** Civic Access & Community Communication  
 **Live demo:** [nilsdanieljohansson-ops.github.io/montgomery-civic-concierge](https://nilsdanieljohansson-ops.github.io/montgomery-civic-concierge/)  
-**Slide deck:** [montgomery_civic_concierge_slide_deck.pptx](montgomery_civic_concierge_slide_deck.pptx)  
+**Slide deck:** [View presentation](https://docs.google.com/presentation/d/e/2PACX-1vSNg-9bKxLX4fH2TuZ68H6X_F8bUzIaIeWh5P_qLfujC5M3-s1kEOOdwXL4nUtQKvqRtDLHDd36a2yS/pub?start=false&loop=false&delayms=3000) · [Download PPTX](montgomery_civic_concierge_slide_deck.pptx)  
 **Project summary:** [montgomery_civic_concierge_summary.pdf](montgomery_civic_concierge_summary.pdf)
 
 ---
