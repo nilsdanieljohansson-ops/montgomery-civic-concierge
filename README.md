@@ -5,7 +5,9 @@
 > Built solo for the [World Wide Vibes Hackathon](https://academy.genai.works/hackathon) · GenAI.Works Academy · March 2026
 
 **Challenge area:** Civic Access & Community Communication  
-**Live demo:** [nilsdanieljohansson-ops.github.io/montgomery-civic-concierge](https://nilsdanieljohansson-ops.github.io/montgomery-civic-concierge/)
+**Live demo:** [nilsdanieljohansson-ops.github.io/montgomery-civic-concierge](https://nilsdanieljohansson-ops.github.io/montgomery-civic-concierge/)  
+**Slide deck:** [montgomery_civic_concierge_slide_deck.pptx](montgomery_civic_concierge_slide_deck.pptx)  
+**Project summary:** [montgomery_civic_concierge_summary.pdf](montgomery_civic_concierge_summary.pdf)
 
 ---
 
@@ -225,7 +227,7 @@ This platform could evolve into a full AI civic copilot:
 
 ## Author
 
-**Daniel Johansson** · Karlskrona, Sweden  
+**Daniel Johansson** · Solo builder · Karlskrona, Sweden  
 "One Solo Meatball"
 
 ---
@@ -239,4 +241,3 @@ MIT License
 *This is an informational AI tool — not an official City of Montgomery service. Not an emergency system. In an emergency, call 911.*
 
 ⭐ **If you like this project, give it a star on GitHub.**
-
